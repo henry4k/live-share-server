@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>test thing</title>
+        <style>
+body
+{
+    background-color: black;
+}
+
+.media
+{
+}
+        </style>
+        <script type="text/javascript">
+'use strict';
+window.addEventListener('load', function(e)
+{
+    const mediaElement = document.createElement('img');
+    mediaElement.classList.add('media');
+    document.body.appendChild(mediaElement);
+
+    const eventSource = new EventSource('/updates');
+    eventSource.addEventListener('new-file', function(e)
+    {
+        const fileName = e.data;
+        const fileUrl = '/user/'+fileName;
+        mediaElement.src = fileUrl;
+    });
+});
+        </script>
+    </head>
+    <body>
+    </body>
+</html>
+

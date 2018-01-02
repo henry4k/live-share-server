@@ -1,0 +1,96 @@
+#!/usr/bin/env lua5.2
+local http_headers = require'http.headers'
+local condition = require'cqueues.condition'
+local path = require'path'
+local cjson = require'cjson'
+local EventStream = require'live-share.EventStream'
+local utils = require'live-share.utils'
+local server = require'live-share.server'
+local config = require'config'
+
+local static_base_dir = config.static_content
+local user_base_dir = config.user_content
+
+local event_condition = condition.new()
+local event_type = nil
+local event_data = nil
+
+local function notify_observers(type, data)
+    event_type = type
+    event_data = data
+    event_condition:signal()
+end
+
+server.match('GET', '^/updates$', function(p)
+    local stream = p.stream
+    local connection = stream.connection
+    local socket = connection.socket
+
+    local event_stream = EventStream(p.stream)
+
+    while true do
+        local condition_signaled, socket_signaled = event_condition:wait(socket)
+
+        if condition_signaled then
+            print'condition'
+        end
+
+        if socket_signaled then
+            print'socket'
+        end
+
+        if socket:eof'r' then
+            print'remote closed in meantime'
+            break
+        end
+
+        if condition_signaled then
+            event_stream:send_raw(event_type, event_data)
+        end
+    end
+
+    stream:shutdown()
+end)
+
+server.match('POST', '^/user/(.*)$', function(p)
+    local file_name = p.pattern_captures[1]
+    assert(not utils.is_shady_file_name(file_name), 'Shady file name.')
+    local file_path = path.join(user_base_dir, file_name)
+
+    local res_headers = http_headers.new()
+    res_headers:append('cache-control', utils.cache_control_dynamic)
+    local stream = p.stream
+
+    if path.exists(file_path) then
+        res_headers:append(':status', '403')
+        utils.respond_with_json(stream, res_headers,
+            {error='File exists already.'})
+    else
+        -- TODO: Create directory path!
+        local file = assert(io.open(file_path, 'w'))
+        stream:save_body_to_file(file)
+        file:close()
+
+        res_headers:append(':status', '200')
+        assert(stream:write_headers(res_headers, true))
+
+        notify_observers('new-file', file_name)
+    end
+end)
+
+server.match('GET', '^/event$', function(p)
+    local stream = p.stream
+    local res_headers = http_headers.new()
+    res_headers:append(':status', '200')
+    res_headers:append('cache-control', utils.cache_control_dynamic)
+    assert(stream:write_headers(res_headers, true))
+
+    notify_observers('new-file', 'aaa')
+end)
+
+server.static('/user', user_base_dir)
+
+server.static('', static_base_dir)
+
+server.run{port = config.port,
+           host = config.host}
