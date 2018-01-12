@@ -15,6 +15,11 @@ function EventStream:send_json(event_name, data)
     return self:send_raw(event_name, json)
 end
 
+function EventStream:send_json(event_name, data)
+    data = cjson.encode(data)
+    return self:send_raw(event_name, data)
+end
+
 function EventStream:send_raw(event_name, data)
     local buffer = {}
 
@@ -32,6 +37,7 @@ function EventStream:send_raw(event_name, data)
 
     local chunk = table.concat(buffer)
     assert(self._http_stream:write_chunk(chunk, false))
+    --assert(self._http_stream.connection:flush())
 end
 
 return function(http_stream)

@@ -1,121 +1,82 @@
+local http_version = require'http.version'
 local http_server = require'http.server'
 local http_headers = require'http.headers'
-local utils = require'live-share.utils'
+local http_util = require'http.util'
 local fat_error = require'fat_error'
-local write_error = require'fat_error.writers.FancyWriter'{}
+local log = require'live-share.log'
+local handlers = require'live-share.handlers'
 
-local server = {_routes = {}}
 
-local function resolve(method, url_path)
-    for _, route in ipairs(server._routes) do
-        if route.method == method then
-            local captures = {string.match(url_path, route.pattern)}
-            if #captures > 0 then
-                return route.callback, {pattern_captures = captures}
-            end
+local server_header = http_version.name..'/'..http_version.version
+local error_handler = handlers.Constant{status = '500'}
+local default_handler = handlers.Constant{status = '404'}
+local router = require'live-share.third-party.router'.new()
+
+local server = {router = router}
+
+local function split_query_args(url_path)
+    local pure_path, query_str = url_path:match('^(.+)?(.+)$')
+    if pure_path then
+        local query_args = {}
+        for k, v in http_util.query_args(query_str) do
+            query_args[k] = v
         end
+        return pure_path, query_args
+    else
+        return url_path, {}
     end
 end
 
-local function stream_handler(_server, stream) -- luacheck: ignore 212
+local function onstream(_server, stream) -- luacheck: ignore 212
     -- Read in headers
-    local req_headers = assert(stream:get_headers())
-    local method = req_headers:get':method'
-    local url_path = req_headers:get':path'
+    local request_headers = assert(stream:get_headers())
+    local method = request_headers:get':method'
+    local url_path = request_headers:get':path'
+    local query_args
 
-    io.stdout:write(string.format('[%s] "%s %s HTTP/%g"  "%s" "%s"\n',
-        os.date'%d/%b/%Y:%H:%M:%S %z',
-        method,
-        url_path,
-        stream.connection.version,
-        req_headers:get'referer' or '-',
-        req_headers:get'user-agent' or '-'
-    ))
+    url_path, query_args = split_query_args(url_path, query_args)
 
-    local callback, params = resolve(method, url_path)
-    if not callback then
-        error(string.format('Could not resolve %s %s', method, url_path))
+    local response_headers = http_headers.new()
+    response_headers:append('server', server_header)
+
+    local handler, params = router:resolve(method, url_path)
+    if not handler then
+        handler = default_handler
+        params = {}
     end
 
     params.stream = stream
-    params.headers = req_headers
+    params.request_headers = request_headers
+    params.response_headers = response_headers
+    params.query = query_args
 
-    local ok, err = fat_error.pcall(callback, params)
+    local ok, err = fat_error.pcall(handler, params)
     if not ok then
-        write_error(err)
+        log.fat_error(err)
+        if stream.state == 'idle' then -- not sent headers or body yet
+            error_handler(params)
+        else
+            response_headers:upsert(':status', '500') -- for logging
+        end
     end
+
+    log.request(stream, request_headers, response_headers)
 end
 
-local function error_handler(_server, context, op, err, errno) -- luacheck: ignore 212
+local function onerror(_server, context, op, err, errno) -- luacheck: ignore 212
     local msg = op .. ' on ' .. tostring(context) .. ' failed'
     if err then
         msg = msg .. ': ' .. tostring(err)
     end
-    io.stderr:write(msg, '\n')
-end
-
-function server.match(method, url_pattern, callback)
-    local route = {method = method,
-                   pattern = url_pattern,
-                   callback = callback}
-    table.insert(server._routes, route)
-end
-
-function server.websocket(url_path, callback)
-    local websocket = require'http.websocket'
-    server.match('GET', url_path, function(p)
-        local connection_header = p.headers:get'connection':lower()
-        local upgrade_header = p.headers:get'upgrade':lower()
-        assert(connection_header:match('upgrade') and
-               upgrade_header == 'websocket',
-               'Not a WebSocket upgrade request.')
-        local ws = assert(websocket.new_from_stream(p.stream, p.headers))
-        ws:accept()
-        p.websocket = ws
-        callback(p)
-    end)
-end
-
-function server.static(url_path, fs_path)
-    local path = require'path'
-    local mimetypes = require'mimetypes'
-    local imf_date = require'http.util'.imf_date
-    assert(path.isdir(fs_path), 'Directory does not exist.')
-    server.match('GET', '^'..url_path..'/(.*)$', function(p)
-        local file_name = p.pattern_captures[1]
-        assert(not utils.is_shady_file_name(file_name), 'Shady file name.')
-        local file_path = path.join(fs_path, file_name)
-        local file = assert(io.open(file_path, 'r'))
-
-        local response_headers = http_headers.new()
-        response_headers:append(':status', '200')
-        response_headers:append('cache-control', utils.cache_control_static)
-
-        local mimetype = mimetypes.guess(file_name)
-        if mimetype then
-            response_headers:append('content-type', mimetype)
-        end
-
-        local file_size = file:seek'end'
-        file:seek'set' -- rewind
-        response_headers:append('content-length', tostring(file_size))
-
-        local mtime = assert(path.mtime(file_path))
-        response_headers:append('last-modified', imf_date(mtime))
-
-        assert(p.stream:write_headers(response_headers, false))
-        assert(p.stream:write_body_from_file(file))
-
-        file:close()
-    end)
+    log.error(msg)
 end
 
 function server.run(t)
     t = t or {}
     t.port = t.port or 0
     t.host = t.host or 'localhost'
-    t.onstream = stream_handler
-    t.onerror = error_handler
+    t.onstream = onstream
+    t.onerror = onerror
 
     local instance = assert(http_server.listen(t))
 
@@ -123,7 +84,7 @@ function server.run(t)
     assert(instance:listen())
     do
         local bound_port = select(3, instance:localname())
-        io.stderr:write(string.format('Now listening on port %d\n', bound_port))
+        log.info('Now listening on port ', tostring(bound_port))
     end
     -- Start the main server loop
     assert(instance:loop())

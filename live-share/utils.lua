@@ -1,3 +1,4 @@
+local path = require'path'
 local cjson = require'cjson'
 
 
@@ -11,15 +12,45 @@ function utils.is_shady_file_name(file_name)
            file_name:match'\\'
 end
 
-function utils.respond_with_json(stream, response_headers, value)
+function utils.respond_with_json(p, value)
     local json = assert(cjson.encode(value))
-    response_headers:append('content-type', 'application/json')
-    assert(stream:write_headers(response_headers, false))
-    assert(stream:write_chunk(json, true))
+    p.response_headers:append('content-type', 'application/json')
+    assert(p.stream:write_headers(p.response_headers, false))
+    assert(p.stream:write_body_from_string(json))
 end
 
 -- See https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control#Examples
 utils.cache_control_dynamic = 'no-cache, no-store, must-revalidate'
-utils.cache_control_static  = 'public, max-age=31536000'
+utils.cache_control_static  = 'public, max-age=600' -- 10 minutes
+--utils.cache_control_static  = 'public, max-age=31536000' -- "forever"
+
+local function get_source_path(stack_index)
+    local info = debug.getinfo(stack_index+1, 'S')
+    if info and
+       info.source and
+       info.source:sub(1,1) == '@' then
+        return info.source:sub(2)
+    end
+end
+
+local source_dir_pattern = '^(.*)[/\\]'
+local function get_source_dir(stack_index)
+    local source_path = get_source_path(stack_index+1)
+    if source_path then
+        return source_path:match(source_dir_pattern)
+    end
+end
+
+--- Gives the current directory or a subpath thereof.
+function utils.here(sub_path)
+    local source_dir = get_source_dir(2)
+    if source_dir then
+        if sub_path then
+            return path.join(source_dir, sub_path)
+        else
+            return source_dir
+        end
+    end
+end
 
 return utils
