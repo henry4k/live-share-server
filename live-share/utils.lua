@@ -4,6 +4,16 @@ local cjson = require'cjson'
 
 local utils = {}
 
+function utils.program_is_available(name)
+    for dir in os.getenv('PATH'):gmatch('[^:]+') do
+        local file_name = path.join(dir, name)
+        if path.exists(file_name) then
+            return file_name
+        end
+    end
+    return nil, string.format('Can\'t find %s in PATH.', name)
+end
+
 function utils.is_shady_file_name(file_name)
     return file_name:match'%.%.' or
            file_name:match'^/'   or

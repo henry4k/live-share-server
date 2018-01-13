@@ -13,8 +13,7 @@ function Upload(props)
     this.category = props.category_name;
     this.mediaType = props.media_type;
 
-    //const mediaUrl = '/uploads/'+id;
-    const thumbnailUrl = 'https://i.imgur.com/nbHpbsob.jpg'; //'/thumbnails/'+id;
+    const thumbnailUrl = '/upload/'+this.id+'/thumbnail';
 
     // List Entry:
     const categoryEl = document.createElement('span');
@@ -26,7 +25,7 @@ function Upload(props)
     const listEntry = document.createElement('a');
     listEntry.appendChild(categoryEl);
     listEntry.appendChild(authorEl);
-    listEntry.style.backgroundImage = "url('"+thumbnailUrl+")";
+    listEntry.style.backgroundImage = "url('"+thumbnailUrl+"')";
     listEntry.href = '#';
     const upload = this;
     listEntry.onclick = function() { setViewedUpload(upload); };

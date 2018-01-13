@@ -4,6 +4,7 @@ local http_headers = require'http.headers'
 local http_util = require'http.util'
 local fat_error = require'fat_error'
 local log = require'live-share.log'
+local Process = require'live-share.Process'
 local handlers = require'live-share.handlers'
 
 
@@ -86,6 +87,9 @@ function server.run(t)
         local bound_port = select(3, instance:localname())
         log.info('Now listening on port ', tostring(bound_port))
     end
+
+    Process:start_signal_watcher(instance.cq)
+
     -- Start the main server loop
     assert(instance:loop())
 end

@@ -25,13 +25,26 @@ Upload:map_column{'media_type',
                       return type.id
                   end}
 
+do
+    local image_type = config.thumbnail.image_type
+    local mime_type = 'image/'..image_type
+    local media_type = media_types.by_mime_type[mime_type]
+    assert(media_type, 'Unknown thumbnail media type.')
+    Upload.thumbnail_media_type = media_type
+end
+
 function Upload:initialize()
     self:initialize_mapping()
 end
 
 function Upload:get_file_name()
-    --local base_name = tostring(self.id)..'.'..self.media_type.file_extension
-    return path.join(config.upload_directory, tostring(self.id))
+    local base_name = tostring(self.id)..'.'..self.media_type.file_extension
+    return path.join(config.upload_directory, base_name)
+end
+
+function Upload:get_thumbnail_file_name()
+    local base_name = tostring(self.id)..'.'..self.thumbnail_media_type.file_extension
+    return path.join(config.thumbnail.directory, base_name)
 end
 
 function Upload:get_resource_properties()
