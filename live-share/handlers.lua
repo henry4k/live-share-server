@@ -61,46 +61,56 @@ function handlers.Websocket(callback)
     end
 end
 
-local function send_file(p, file, headers)
-    local response_headers = p.response_headers
-    response_headers:append(':status', '200')
-    response_headers:append('cache-control', utils.cache_control_static)
-    for name, value in pairs(headers) do
-        response_headers:append(name, value)
-    end
-
-    assert(p.stream:write_headers(response_headers, false))
-    assert(p.stream:write_body_from_file(file))
-end
-
-local function get_file_headers(file_name, file)
-    local headers = {}
-
-    local mimetype = mimetypes.guess(file_name)
-    if mimetype then
-        headers['content-type'] = mimetype
+local function collect_headers_from_file(headers, file_name, file)
+    if not headers:has'content-type' then
+        local mimetype = mimetypes.guess(file_name)
+        if mimetype then
+            headers:append('content-type', mimetype)
+        end
     end
 
     local mtime = assert(path.mtime(file_name))
-    headers['last-modified'] = imf_date(mtime)
+    headers:upsert('last-modified', imf_date(mtime))
 
     local file_size = file:seek'end'
     file:seek'set' -- rewind
-    headers['content-length'] = tostring(file_size)
-
-    return headers
+    headers:upsert('content-length', tostring(file_size))
 end
+
+local function send_file(p, file_name)
+    local response_headers = p.response_headers
+    if not response_headers:has'cache-control' then
+        response_headers:append('cache-control', utils.cache_control_static)
+    end
+
+    local file = io.open(file_name, 'r')
+    if not file then
+        -- TODO: 404
+        response_headers:append(':status', '404')
+        assert(p.stream:write_headers(response_headers, true))
+    end
+
+    response_headers:append(':status', '200')
+    collect_headers_from_file(response_headers, file_name, file)
+
+    local is_head_request = p.request_headers:get':method' == 'HEAD'
+
+    assert(p.stream:write_headers(response_headers, is_head_request))
+
+    if is_head_request then
+        file:close()
+        return
+    else
+        assert(p.stream:write_body_from_file(file))
+        file:close()
+    end
+end
+handlers.send_file = send_file
 
 function handlers.StaticFile(file_name)
     assert(path.isfile(file_name), 'File does not exist.')
-    local file = assert(io.open(file_name, 'r'))
-    local headers = get_file_headers(file_name, file)
-    file:close()
-
     return function(p)
-        local f = assert(io.open(file_name, 'r'))
-        send_file(p, f, headers)
-        f:close()
+        return send_file(p, file_name)
     end
 end
 
@@ -110,11 +120,7 @@ function handlers.StaticDir(dir_name)
         local file_name = assert(p.file, 'Router passes no file parameter.')
         assert(not utils.is_shady_file_name(file_name), 'Shady file name.')
         local file_name = path.join(dir_name, file_name)
-
-        local file = assert(io.open(file_name, 'r'))
-        local headers = get_file_headers(file_name, file)
-        send_file(p, file, headers)
-        file:close()
+        return send_file(p, file_name)
     end
 end
 

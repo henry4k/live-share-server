@@ -1,21 +1,11 @@
 #!/usr/bin/env lua5.2
 local database = require'live-share.database'
-local handlers = require'live-share.handlers'
 local server = require'live-share.server'
 local config = require'config'
 
--- Dynamic stuff:
-require'live-share.upload'
-require'live-share.update'
-require'live-share.category'
-require'live-share.user'
-
--- Static stuff:
-local static = config.static_content
-server.router:get('/', handlers.Redirect{to='/index.html'})
-server.router:get('/index.html', handlers.StaticFile(static..'/index.html'))
-server.router:get('/style.css', handlers.StaticFile(static..'/style.css'))
-server.router:get('/script.js', handlers.StaticFile(static..'/script.js'))
+require'live-share.resource.upload'
+require'live-share.resource.update'
+require'live-share.resource.static'
 
 server.run{port = config.port,
            host = config.host}

@@ -3,12 +3,12 @@ local EventStream = require'live-share.EventStream'
 local server = require'live-share.server'
 
 
-local update = {}
+local update_resource = {}
 
 local event_condition = condition.new()
 local observer_events = {}
 
-function update.notify_observers(type, data)
+function update_resource.notify_observers(type, data)
     local event = {type = type, data = data}
     for _, event_list in pairs(observer_events) do
         table.insert(event_list, event)
@@ -61,4 +61,4 @@ server.router:get('/updates', function(p)
     stream:shutdown()
 end)
 
-return update
+return update_resource

@@ -52,10 +52,10 @@ function MappedEntity.static:map_column(t)
         local pk_import = pk.import
         local pk_export = pk.export
         import = function(s) return klass:by_id(pk_import(s)) end
-        export = function(v) return nil end -- TODO
+        export = function(v) return pk_export(v:get_id()) end
     else
-        import = pass_through
-        export = pass_through
+        import = t.import or pass_through
+        export = t.export or pass_through
     end
 
     local property = {column_name = column_name,
@@ -92,6 +92,17 @@ function MappedEntity.static:by_id(id)
     return entity
 end
 
+-- TODO: This should go into fat_error!
+local fat_error = require'fat_error'
+local coro_create = fat_error.create_coroutine_with_error_handler
+local coro_resume = fat_error.resume_coroutine_and_propagate_error
+local function coro_wrap(fn)
+    local coro = coro_create(fn)
+    return function(...)
+        return coro_resume(coro, ...)
+    end
+end
+
 -- Note that the same each-iterator can't be nested - as the underlying
 -- statement object would be the same (because of statement cache).
 function MappedEntity.static:each(t)
@@ -121,7 +132,7 @@ function MappedEntity.static:each(t)
 
     local import_id = primary_key_property.import
 
-    return coroutine.wrap(function()
+    return coro_wrap(function()
         for row in database(s):rows() do
             assert(#row == 1)
             local id = import_id(row[1])
@@ -129,6 +140,21 @@ function MappedEntity.static:each(t)
             coroutine.yield(entity)
         end
     end)
+end
+
+function MappedEntity.static:select(t)
+    local entities = {}
+    for entity in self:each(t) do
+        table.insert(entities, entity)
+    end
+    return entities
+end
+
+function MappedEntity.static:select_one(t)
+    t.limit = 1
+    local entities = self:select(t)
+    assert(#entities <= 1)
+    return entities[1] -- doesn't need to exist
 end
 
 function MappedEntity:initialize_mapping()
@@ -187,6 +213,22 @@ function MappedEntity:set_property_value(lua_name, value)
     property_state.dirty_set[property] = true
 end
 
+function MappedEntity:__index(key)
+    local property = self.class._mapping.property_by_lua_name[key]
+    if property then
+        return self:get_property_value(key)
+    end
+end
+
+function MappedEntity:__newindex(key, value)
+    local property = self.class._mapping.property_by_lua_name[key]
+    if property then
+        return self:set_property_value(key, value)
+    else
+        rawset(self, key, value)
+    end
+end
+
 function MappedEntity:create_entity()
     local mapping = self.class._mapping
     local primary_key_property = mapping.primary_key_property
@@ -201,8 +243,9 @@ function MappedEntity:create_entity()
     for _, property in ipairs(mapping.property_list) do
         if property ~= primary_key_property then
             local value = values[property.index]
-            if value then
+            if value ~= nil then -- 'false' is alowed
                 local exported_value = property.export(value)
+                assert(exported_value)
                 table.insert(column_names, property.column_name)
                 table.insert(parameter_placeholders, '?')
                 table.insert(statement_parameters, exported_value)

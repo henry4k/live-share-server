@@ -5,28 +5,23 @@ var uploadVideoElement = null;
 var uploadDetailsElement = null;
 var uploadListElement = null;
 
-/**
- * @param id user id
- * @param type image or video
- * @param author user name
- * @param category
- */
-function Upload(id, type, author, category)
+function Upload(props)
 {
-    this.id = id;
-    this.type = type;
-    this.author = author;
-    this.category = category;
+    this.id = props.id;
+    this.time = props.time;
+    this.author = props.user_name;
+    this.category = props.category_name;
+    this.mediaType = props.media_type;
 
     //const mediaUrl = '/uploads/'+id;
     const thumbnailUrl = 'https://i.imgur.com/nbHpbsob.jpg'; //'/thumbnails/'+id;
 
     // List Entry:
     const categoryEl = document.createElement('span');
-    categoryEl.innerHTML = category;
+    categoryEl.innerHTML = this.category;
 
     const authorEl = document.createElement('span');
-    authorEl.innerHTML = author;
+    authorEl.innerHTML = this.author;
 
     const listEntry = document.createElement('a');
     listEntry.appendChild(categoryEl);
@@ -54,9 +49,9 @@ function resetViewedUpload()
 
 function setViewedUpload(upload)
 {
-    console.log(upload.type, upload);
+    console.log(upload);
     resetViewedUpload();
-    if(upload.type == 'image')
+    if(upload.mediaType == 'image')
     {
         uploadImageElement.src = '/upload/'+upload.id;
         uploadImageElement.style.display = 'initial';
@@ -79,21 +74,8 @@ window.addEventListener('load', function(e)
     eventSource.addEventListener('new-upload', function(e)
     {
         const message = JSON.parse(e.data);
-        const upload = new Upload(message.id,
-                                  message.type,
-                                  message.user,
-                                  message.category);
+        const upload = new Upload(message);
         appendUploadEntry(upload);
         setViewedUpload(upload);
     });
-
-    /*
-    const u1 = new Upload(42, 'image', 'henry', 'wurst');
-    appendUploadEntry(u1);
-
-    const u2 = new Upload(42, 'video', 'henry', 'brot');
-    appendUploadEntry(u2);
-
-    setViewedUpload(u2);
-    */
 });
