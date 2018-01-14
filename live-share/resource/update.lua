@@ -21,7 +21,7 @@ server.router:get('/updates', function(p)
     local connection = stream.connection
     local socket = connection.socket
 
-    local event_stream = EventStream(p.stream)
+    local event_stream = EventStream(p)
 
     local event_list = {}
     observer_events[event_stream] = event_list -- event_stream doubles as unique key
@@ -58,7 +58,7 @@ server.router:get('/updates', function(p)
 
     observer_events[event_stream] = nil
 
-    stream:shutdown()
+    event_stream:close()
 end)
 
 return update_resource

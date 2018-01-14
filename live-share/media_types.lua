@@ -12,7 +12,7 @@ local media_types = {{type = 'image',
                       file_extension = 'webm'},
                      {type = 'video',
                       subtype = 'mp4',
-                      extension = 'mp4'}}
+                      file_extension = 'mp4'}}
 
 local media_types_by_mime_type = {}
 

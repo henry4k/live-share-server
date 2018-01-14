@@ -10,7 +10,7 @@ Category:map_primary_key'id'
 Category:map_column'name'
 
 function Category.static:get_by_name(name)
-    return self:select_one{where = {name = name}}
+    return self:select():raw'WHERE name = ':var(name):execute():first()
 end
 
 function Category.static:get_or_create(name)

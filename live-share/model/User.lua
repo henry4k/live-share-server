@@ -12,7 +12,7 @@ User:map_column'name'
 User:map_column'is_admin'
 
 function User.static:get_by_name(name)
-    return self:select_one{where = {name = name}}
+    return self:select():raw'WHERE name = ':var(name):execute():first()
 end
 
 function User.static:get_from_request(request_headers)

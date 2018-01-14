@@ -12,7 +12,7 @@ Process:start_signal_watcher(cq)
 cq:wrap(function()
     local process_set = {}
     local total_process_count = 0
-    for upload in Upload:each() do
+    for upload in Upload:select():execute():each() do
         local process = assert(thumbnail.generate(upload))
         process_set[process] = true
         total_process_count = total_process_count + 1

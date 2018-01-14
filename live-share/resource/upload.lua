@@ -9,7 +9,7 @@ local User = require'live-share.model.User'
 local Category = require'live-share.model.Category'
 local Upload = require'live-share.model.Upload'
 local thumbnail = require'live-share.thumbnail'
-local config = require'config'
+local datetime = require'live-share.datetime'
 
 
 server.router:post('/upload', function(p)
@@ -46,6 +46,32 @@ server.router:post('/upload', function(p)
 
     update_resource.notify_observers('new-upload',
                                      upload:get_resource_properties())
+end)
+
+local max_query_limit = 100
+server.router:get('/upload/query', function(p)
+    local s = Upload:select()
+
+    if p.query.before then
+        local time = assert(datetime.parse_iso_date_time(p.query.before))
+        s:raw'WHERE time < ':var(time)
+    end
+
+    if p.query.order then
+        s:raw' ORDER BY ':id(p.query.order):raw' DESC'
+    end
+
+    local limit = math.min(p.query.limit or max_query_limit, max_query_limit)
+    s:raw' LIMIT ':var(limit)
+
+    local results = {}
+    for upload in s:execute():each() do
+        table.insert(results, upload:get_resource_properties())
+    end
+
+    p.response_headers:append(':status', '200')
+    p.response_headers:append('cache-control', utils.cache_control_dynamic)
+    utils.respond_with_json(p, results)
 end)
 
 local function handle_file_request(p)

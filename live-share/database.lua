@@ -24,15 +24,6 @@ end
 
 -- @param statement May be a string or an sqlrocks Statement instance
 function database.exec(statement, use_cache, ...)
-    local params
-    if type(statement) == 'table' then
-        local s = statement:toParams{placeholder = '?'}
-        statement = s.text
-        params = s.values
-    else
-        params = {...}
-    end
-
     local ps
     if use_cache then
         ps = statement_cache[statement]
@@ -45,7 +36,7 @@ function database.exec(statement, use_cache, ...)
         end
     end
 
-    assert(ps:execute(table.unpack(params)))
+    assert(ps:execute(...))
 
     return ps
 end

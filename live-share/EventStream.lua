@@ -1,5 +1,4 @@
 local cjson = require'cjson'
-local http_headers = require'http.headers'
 local utils = require'live-share.utils'
 
 
@@ -37,17 +36,20 @@ function EventStream:send_raw(event_name, data)
 
     local chunk = table.concat(buffer)
     assert(self._http_stream:write_chunk(chunk, false))
-    --assert(self._http_stream.connection:flush())
 end
 
-return function(http_stream)
-    local self = {_http_stream = http_stream}
+function EventStream:close()
+    assert(self._http_stream:write_chunk('', true))
+end
 
-    local res_headers = http_headers.new()
-    res_headers:append(':status', '200')
-    res_headers:append('content-type', 'text/event-stream')
-    res_headers:append('cache-control', utils.cache_control_dynamic)
-    assert(http_stream:write_headers(res_headers, false))
+return function(p)
+    local self = {_http_stream = p.stream}
+
+    local headers = p.response_headers
+    headers:append(':status', '200')
+    headers:append('content-type', 'text/event-stream')
+    headers:append('cache-control', utils.cache_control_dynamic)
+    assert(p.stream:write_headers(headers, false))
 
     return setmetatable(self, EventStream)
 end

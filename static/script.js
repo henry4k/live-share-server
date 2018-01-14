@@ -8,7 +8,7 @@ var uploadListElement = null;
 function Upload(props)
 {
     this.id = props.id;
-    this.time = props.time;
+    this.time = new Date(props.time);
     this.author = props.user_name;
     this.category = props.category_name;
     this.mediaType = props.media_type;
@@ -62,6 +62,28 @@ function setViewedUpload(upload)
     }
 }
 
+function getLatestUploads(count)
+{
+    const now = new Date(Date.now());
+    const url = '/upload/query?limit='+count+'&order=time&before='+now.toISOString();
+    const request = new XMLHttpRequest();
+    request.responseType = 'json';
+    request.addEventListener('load', function(e)
+    {
+        if(request.responseType !== 'json') {
+            throw new Error('Invalid response type.');
+        }
+
+        for(var uploadProps of request.response)
+        {
+            const upload = new Upload(uploadProps);
+            appendUploadEntry(upload);
+        }
+    });
+    request.open('GET', url);
+    request.send();
+}
+
 window.addEventListener('load', function(e)
 {
     uploadImageElement = document.getElementById('upload-image');
@@ -69,8 +91,10 @@ window.addEventListener('load', function(e)
     uploadDetailsElement = document.getElementById('upload-details');
     uploadListElement = document.getElementById('upload-list');
 
-    const eventSource = new EventSource('/updates');
-    eventSource.addEventListener('new-upload', function(e)
+    getLatestUploads(10);
+
+    const updatesEventSource = new EventSource('/updates');
+    updatesEventSource.addEventListener('new-upload', function(e)
     {
         const message = JSON.parse(e.data);
         const upload = new Upload(message);

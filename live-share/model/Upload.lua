@@ -4,6 +4,7 @@ local MappedEntity = require'live-share.MappedEntity'
 local User = require'live-share.model.User'
 local Category = require'live-share.model.Category'
 local media_types = require'live-share.media_types'
+local datetime = require'live-share.datetime'
 local config = require'config'
 
 
@@ -49,7 +50,7 @@ end
 
 function Upload:get_resource_properties()
     return {id = self.id,
-            time = self.time,
+            time = datetime.compose_iso_date_time(self.time),
             user_name = self.user.name,
             category_name = self.category.name,
             media_type = self.media_type.type}

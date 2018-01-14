@@ -1,6 +1,7 @@
 local class = require'middleclass'
 local database = require'live-share.database'
-local sql_select = require'live-share.sql'.select
+local SqlStatement = require'live-share.SqlStatement'
+
 
 local MappedEntity = {static = {}}
 
@@ -93,68 +94,58 @@ function MappedEntity.static:by_id(id)
 end
 
 -- TODO: This should go into fat_error!
-local fat_error = require'fat_error'
-local coro_create = fat_error.create_coroutine_with_error_handler
-local coro_resume = fat_error.resume_coroutine_and_propagate_error
-local function coro_wrap(fn)
-    local coro = coro_create(fn)
-    return function(...)
-        return coro_resume(coro, ...)
+--local fat_error = require'fat_error'
+--local coro_create = fat_error.create_coroutine_with_error_handler
+--local coro_resume = fat_error.resume_coroutine_and_propagate_error
+--local function coro_wrap(fn)
+--    local coro = coro_create(fn)
+--    return function(...)
+--        return coro_resume(coro, ...)
+--    end
+--end
+
+local EntityQueryResults = {}
+EntityQueryResults.__index = EntityQueryResults
+
+function EntityQueryResults:__call(raw_results)
+    self.raw_results = raw_results
+    return self
+end
+
+function EntityQueryResults:next()
+    local row = self.raw_results:fetch()
+    if row then
+        assert(#row == 1)
+        local id = self.import_id(row[1])
+        return self.klass:by_id(id)
     end
 end
 
--- Note that the same each-iterator can't be nested - as the underlying
--- statement object would be the same (because of statement cache).
-function MappedEntity.static:each(t)
+EntityQueryResults.first = EntityQueryResults.next
+
+function EntityQueryResults:each()
+    return self.next, self
+end
+
+function EntityQueryResults:collect()
+    local r = {}
+    for v in self:each() do
+        r[#r+1] = v
+    end
+    return r
+end
+
+function MappedEntity.static:select()
     local mapping = self._mapping
     local primary_key_property = mapping.primary_key_property
 
-    local s = sql_select(primary_key_property.column_name) -- SELECT `id`
-    s:from(mapping.table_name)
-
-    t = t or {}
-
-    if t.where then
-        s:where(t.where)
-    end
-
-    if t.order_by then
-        s:orderBy(t.order_by)
-    end
-
-    if t.limit then
-        s:limit(t.limit)
-    end
-
-    if t.offset then
-        s:limit(t.offset)
-    end
-
-    local import_id = primary_key_property.import
-
-    return coro_wrap(function()
-        for row in database(s):rows() do
-            assert(#row == 1)
-            local id = import_id(row[1])
-            local entity = self:by_id(id)
-            coroutine.yield(entity)
-        end
-    end)
-end
-
-function MappedEntity.static:select(t)
-    local entities = {}
-    for entity in self:each(t) do
-        table.insert(entities, entity)
-    end
-    return entities
-end
-
-function MappedEntity.static:select_one(t)
-    t.limit = 1
-    local entities = self:select(t)
-    assert(#entities <= 1)
-    return entities[1] -- doesn't need to exist
+    local queryResults = {klass = self,
+                          import_id = primary_key_property.import}
+    setmetatable(queryResults, EntityQueryResults)
+    local statement = SqlStatement(queryResults)
+    statement:raw'SELECT ':id(primary_key_property.column_name)
+    statement:raw' FROM ':id(mapping.table_name):raw' '
+    return statement
 end
 
 function MappedEntity:initialize_mapping()
