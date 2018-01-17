@@ -39,9 +39,9 @@ local function build_ffmpeg_args(input, output)
     local filter = {f('thumbnail=%d',
                       inspected_frames),
                     f('scale=w=%d:h=%d:force_original_aspect_ratio=increase',
-                      size, size),
-                    f('crop=w=%d:h=%d',
                       size, size)}
+                    --f('crop=w=%d:h=%d',
+                    --  size, size)}
 
     local args = {'ffmpeg',
                   '-hide_banner',

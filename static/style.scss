@@ -1,26 +1,13 @@
 $fg-neutral:  #f8f6f2;
-$bg-top:      #857f78;
-$bg-bottom:   #242321;
-$bg-center:   mix($bg-top, $bg-bottom, 50%);
 
-$border-radius: 0.6em;
-
-@mixin background($color, $alpha)
-{
-    background: linear-gradient(
-        to bottom,
-        mix($bg-top,    $color, $alpha),
-        mix($bg-center, $color, $alpha),
-        mix($bg-bottom, $color, $alpha));
-    background-attachment: fixed;
-}
+$border-radius: 0; //0.6em;
+$item-size: 160px;
 
 html, body, main
 {
     width:  100%;
     height: 100%;
-
-    @include background($fg-neutral, 100%);
+    background: black;
 }
 
 a
@@ -44,15 +31,17 @@ main
 {
     display: flex;
     flex-direction: column;
-
-    width: 100%;
-    height: 100%;
 }
 
 #upload-view
 {
-    flex-grow: 1;
-    flex-shrink: 0;
+    flex: 1 1 auto;
+
+    background-position: center;
+    background-size: cover;
+
+    //width: 0;
+    height: 0; // Without this children may try to enlarge their container.
 
     display: flex;
     flex-direction: column;
@@ -63,15 +52,10 @@ main
 
 #upload-image, #upload-video
 {
-    flex-grow: 0;
-    flex-shrink: 0;
-    //max-width:  100%;
-    //max-height: 100%;
-    //display: block;
-    //margin: 0 auto;
-    display: none;
+    flex: 1 1 auto;
 
     border-radius: $border-radius;
+    object-fit: scale-down;
 }
 
 .upload-details
@@ -94,14 +78,16 @@ main
     {
         flex-grow: 0;
         flex-shrink: 0;
-        //flex-base: 160px;
-        margin-top:    1em;
-        margin-bottom: 1em;
-        margin-left:   1em;
-        width: 160px;
-        height: 160px;
+        //margin-top:    1em;
+        //margin-bottom: 1em;
+        //margin-left:   1em;
 
+        width:  $item-size;
+        height: $item-size;
         border-radius: $border-radius;
+        background-position: center;
+        background-size: cover;
+        //filter: grayscale(100%);
 
         display: flex;
         flex-direction: column;
@@ -137,7 +123,7 @@ main
 
     margin: 1em;
     font-size: 0.7em;
-    color: $bg-center;
+    color: $fg-neutral;
     //color: $bg-bottom;
     //text-shadow: -1px -1px 0 $fg-neutral,
     //              1px -1px 0 $fg-neutral,
@@ -149,3 +135,12 @@ main
 {
     content: "..what?";
 }
+
+// remove dotted border around clicked things:
+video:focus {
+    border: none;
+    outline: 0;
+    outline-style:none;
+    outline-width:0;
+}
+

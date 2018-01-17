@@ -1,37 +1,84 @@
 'use strict';
 
+function loadImage(url)
+{
+    const image = document.createElement('img');
+    image.style.visibility = 'hidden';
+    image.src = url;
+
+    return new Promise(function(resolve, reject) {
+        image.addEventListener('load', function() {
+            resolve(image);
+        });
+        image.addEventListener('error', reject);
+    });
+}
+
+class Upload
+{
+    constructor(props)
+    {
+        const self = this;
+
+        this.id        = props.id;
+        this.time      = new Date(props.time);
+        this.author    = props.user_name;
+        this.category  = props.category_name;
+        this.mediaType = props.media_type;
+
+        this.thumbnailSizePromise = loadImage(this.thumbnailUrl).then(function(image) {
+            return [image.width, image.height];
+        });
+
+        // List Entry:
+        const categoryEl = document.createElement('span');
+        categoryEl.innerHTML = this.category;
+
+        const authorEl = document.createElement('span');
+        authorEl.innerHTML = this.author;
+
+        const listEntry = document.createElement('a');
+        listEntry.appendChild(categoryEl);
+        listEntry.appendChild(authorEl);
+        listEntry.style.backgroundImage = "url('"+this.thumbnailUrl+"')";
+        listEntry.href = '';
+        listEntry.addEventListener('click', function(e) {
+            setViewedUpload(self);
+            e.preventDefault();
+        });
+        this.listEntry = listEntry;
+    }
+
+    destroy()
+    {
+        this.listEntry.remove();
+    }
+
+    get url()
+    {
+        return '/upload/'+this.id;
+    }
+
+    get thumbnailUrl()
+    {
+        return '/upload/'+this.id+'/thumbnail';
+    }
+
+    async getBlurryImageUrl()
+    {
+        const self = this;
+        return this.thumbnailSizePromise.then(function(size) {
+            return '/upload/'+self.id+'/_blurry_thumbnail?width='+size[0]+'&height='+size[1];
+        });
+    }
+}
+
+
+var uploadViewElement = null;
 var uploadImageElement = null;
 var uploadVideoElement = null;
 var uploadDetailsElement = null;
 var uploadListElement = null;
-
-function Upload(props)
-{
-    this.id = props.id;
-    this.time = new Date(props.time);
-    this.author = props.user_name;
-    this.category = props.category_name;
-    this.mediaType = props.media_type;
-
-    const thumbnailUrl = '/upload/'+this.id+'/thumbnail';
-
-    // List Entry:
-    const categoryEl = document.createElement('span');
-    categoryEl.innerHTML = this.category;
-
-    const authorEl = document.createElement('span');
-    authorEl.innerHTML = this.author;
-
-    const listEntry = document.createElement('a');
-    listEntry.appendChild(categoryEl);
-    listEntry.appendChild(authorEl);
-    listEntry.style.backgroundImage = "url('"+thumbnailUrl+"')";
-    listEntry.href = '#';
-    const upload = this;
-    listEntry.onclick = function() { setViewedUpload(upload); };
-
-    this.listEntry = listEntry;
-}
 
 function appendUploadEntry(upload)
 {
@@ -40,24 +87,28 @@ function appendUploadEntry(upload)
 
 function resetViewedUpload()
 {
+    uploadViewElement.style.backgroundImage = '';
     uploadImageElement.src = '';
     uploadVideoElement.src = '';
     uploadImageElement.style.display = 'none';
     uploadVideoElement.style.display = 'none';
 }
 
-function setViewedUpload(upload)
+async function setViewedUpload(upload)
 {
-    console.log(upload);
     resetViewedUpload();
+
+    //const blurryImageUrl = await upload.getBlurryImageUrl();
+    //uploadViewElement.style.backgroundImage = "url('"+blurryImageUrl+"')";
+
     if(upload.mediaType == 'image')
     {
-        uploadImageElement.src = '/upload/'+upload.id;
+        uploadImageElement.src = upload.url;
         uploadImageElement.style.display = 'initial';
     }
     else
     {
-        uploadVideoElement.src = '/upload/'+upload.id;
+        uploadVideoElement.src = upload.url;
         uploadVideoElement.style.display = 'initial';
     }
 }
@@ -70,11 +121,10 @@ function getLatestUploads(count)
     request.responseType = 'json';
     request.addEventListener('load', function(e)
     {
-        if(request.responseType !== 'json') {
+        if(request.responseType !== 'json')
             throw new Error('Invalid response type.');
-        }
 
-        for(var uploadProps of request.response)
+        for(let uploadProps of request.response)
         {
             const upload = new Upload(uploadProps);
             appendUploadEntry(upload);
@@ -86,6 +136,7 @@ function getLatestUploads(count)
 
 window.addEventListener('load', function(e)
 {
+    uploadViewElement = document.getElementById('upload-view');
     uploadImageElement = document.getElementById('upload-image');
     uploadVideoElement = document.getElementById('upload-video');
     uploadDetailsElement = document.getElementById('upload-details');

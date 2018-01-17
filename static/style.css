@@ -1,8 +1,7 @@
 html, body, main {
   width: 100%;
   height: 100%;
-  background: linear-gradient(to bottom, #857f78, #55514d, #242321);
-  background-attachment: fixed;
+  background: black;
 }
 
 a {
@@ -22,13 +21,13 @@ body {
 main {
   display: flex;
   flex-direction: column;
-  width: 100%;
-  height: 100%;
 }
 
 #upload-view {
-  flex-grow: 1;
-  flex-shrink: 0;
+  flex: 1 1 auto;
+  background-position: center;
+  background-size: cover;
+  height: 0;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -36,10 +35,9 @@ main {
 }
 
 #upload-image, #upload-video {
-  flex-grow: 0;
-  flex-shrink: 0;
-  display: none;
-  border-radius: 0.6em;
+  flex: 1 1 auto;
+  border-radius: 0;
+  object-fit: scale-down;
 }
 
 .upload-details {
@@ -58,31 +56,30 @@ main {
 #upload-list > * {
   flex-grow: 0;
   flex-shrink: 0;
-  margin-top: 1em;
-  margin-bottom: 1em;
-  margin-left: 1em;
   width: 160px;
   height: 160px;
-  border-radius: 0.6em;
+  border-radius: 0;
+  background-position: center;
+  background-size: cover;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
 }
 
 #upload-list > * > * {
-  padding-left: 0.6em;
-  padding-right: 0.6em;
+  padding-left: 0;
+  padding-right: 0;
   background-color: rgba(0, 0, 0, 0.2);
 }
 
 #upload-list > * > *:first-child {
-  border-top-left-radius: 0.6em;
-  border-top-right-radius: 0.6em;
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
 }
 
 #upload-list > * > *:last-child {
-  border-bottom-left-radius: 0.6em;
-  border-bottom-right-radius: 0.6em;
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
   text-align: right;
 }
 
@@ -92,9 +89,16 @@ main {
   right: 0;
   margin: 1em;
   font-size: 0.7em;
-  color: #55514d;
+  color: #f8f6f2;
 }
 
 #source-link::before {
   content: "..what?";
+}
+
+video:focus {
+  border: none;
+  outline: 0;
+  outline-style: none;
+  outline-width: 0;
 }

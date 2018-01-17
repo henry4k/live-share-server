@@ -91,3 +91,43 @@ local function handle_thumbnail_request(p)
 end
 server.router:get('/upload/:id/thumbnail', handle_thumbnail_request)
 server.router:head('/upload/:id/thumbnail', handle_thumbnail_request)
+
+-- And this is a weird helper function:
+local svg = [[
+<svg xmlns="http://www.w3.org/2000/svg"
+     xmlns:xlink="http://www.w3.org/1999/xlink"
+     width="{{width}}" height="{{height}}"
+     viewBox="0 0 {{width}} {{height}}">
+    <filter id="blur" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+        <feGaussianBlur stdDeviation="2 2" edgeMode="duplicate"/>
+        <feComponentTransfer>
+            <feFuncA type="discrete" tableValues="1 1"/>
+        </feComponentTransfer>
+    </filter>
+    <image filter="url(#blur)"
+           xlink:href="/upload/{{id}}/thumbnail"
+           x="0" y="0"
+           height="100%" width="100%"/>
+</svg>]]
+
+        --xlink:href="http://localhost:12345/upload/{{id}}/thumbnail" 
+svg = svg:gsub('\n%s*', ' ') -- remove line breaks and intendation
+server.router:get('/upload/:id/_blurry_thumbnail', function(p)
+    local width  = assert(p.query.width)
+    local height = assert(p.query.height)
+    local id = assert(tonumber(p.id))
+    local upload = assert(Upload:by_id(id))
+
+    local out = svg:gsub('{{(.-)}}', {width = width,
+                                      height = height,
+                                      id = id})
+
+    local headers = p.response_headers
+    headers:append(':status', '200')
+    headers:append('content-type', 'image/svg+xml')
+    headers:append('cache-control', utils.cache_control_static)
+    headers:append('content-length', tostring(#out))
+
+    assert(p.stream:write_headers(headers, false))
+    assert(p.stream:write_body_from_string(out))
+end)

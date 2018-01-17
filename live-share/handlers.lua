@@ -88,6 +88,7 @@ local function send_file(p, file_name)
         -- TODO: 404
         response_headers:append(':status', '404')
         assert(p.stream:write_headers(response_headers, true))
+        return
     end
 
     response_headers:append(':status', '200')
