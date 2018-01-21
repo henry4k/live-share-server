@@ -1,0 +1,29 @@
+#!/bin/bash
+BRANCH='gh-pages'
+
+set -e
+
+TMPDIR="$(mktemp -d)"
+
+function teardown()
+{
+    rm -r "$TMPDIR"
+    git worktree prune
+}
+trap teardown EXIT
+
+git worktree add --force "$TMPDIR" "$BRANCH"
+
+apidoc --input live-share \
+       --output "$TMPDIR"
+
+git -C "$TMPDIR" diff
+
+read -p "Is this okay? " -n 1 -r
+echo
+if [[ ! $REPLY =~ ^[Yy]$ ]]
+then
+    exit 1
+fi
+
+git -C "$TMPDIR" commit --all --allow-empty-message -m ''
