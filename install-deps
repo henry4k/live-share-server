@@ -1,0 +1,13 @@
+#!/bin/sh
+for dep in cjson \
+           luadbi \
+           luadbi-sqlite3 \
+           mimetypes \
+           cqueues \
+           http \
+           lua-path \
+           middleclass \
+           fat_error \
+           luaposix; do
+    luarocks --local install $dep
+done
