@@ -16,6 +16,12 @@ function update_resource.notify_observers(type, data)
     event_condition:signal()
 end
 
+--[[
+@api {get} /update Receive upload events
+@apiDescription Events are passed in the [EventStream](https://developer.mozilla.org/en-US/docs/Web/API/EventSource) format.
+@apiName GetUpdates
+@apiGroup Update
+--]]
 server.router:get('/updates', function(p)
     local stream = p.stream
     local connection = stream.connection

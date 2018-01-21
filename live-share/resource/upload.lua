@@ -13,10 +13,12 @@ local datetime = require'live-share.datetime'
 
 
 --[[
-@api {post} /upload Upload a file.
-@apiVersion 0.1.0
+@api {post} /upload Upload a file
 @apiName UploadFile
 @apiGroup Upload
+@apiPermission user
+
+@apiParam {String} category Name of the category. (query parameter)
 --]]
 server.router:post('/upload', function(p)
     local user = assert(User:get_from_request(p.request_headers))
@@ -54,6 +56,41 @@ server.router:post('/upload', function(p)
                                      upload:get_resource_properties())
 end)
 
+
+--[[
+@api {get} /upload/query Search for uploads
+@apiName QueryUpload
+@apiGroup Upload
+
+@apiParam {DateTime} [before] Select uploads created before given timestamp. (query parameter)
+@apiParam {String} [order_asc] ... (query parameter)
+@apiParam {String} [order_desc] ... (query parameter)
+@apiParam {Number} [limit=100] ... (query parameter)
+
+@apiSuccess {Number} id
+@apiSuccess {DateTime} time ISO date time format
+@apiSuccess {String} user_name
+@apiSuccess {String} category_name
+@apiSuccess {String="image","video"} media_type
+@apiSuccessExample {json}
+    HTTP/1.1 200 OK
+    [
+        {
+            "id": 42,
+            "time": "2007-04-05T12:30-02:00Z",
+            "user_name": "Mario",
+            "category_name": "Portal",
+            "media_type": "image"
+        },
+        {
+            "id": 45,
+            "time": "2007-05-12T7:33-06:03Z",
+            "user_name": "Luigi",
+            "category_name": "Witcher",
+            "media_type": "video"
+        }
+    ]
+--]]
 local max_query_limit = 100
 server.router:get('/upload/query', function(p)
     local s = Upload:select()
@@ -84,6 +121,13 @@ server.router:get('/upload/query', function(p)
     utils.respond_with_json(p, results)
 end)
 
+--[[
+@api {get} /upload/:id Retrieve a file
+@apiName GetUpload
+@apiGroup Upload
+
+@apiParam {Number} id
+--]]
 local function handle_file_request(p)
     local id = assert(tonumber(p.id))
     local upload = assert(Upload:by_id(id))
@@ -93,6 +137,13 @@ end
 server.router:get('/upload/:id', handle_file_request)
 server.router:head('/upload/:id', handle_file_request)
 
+--[[
+@api {get} /upload/:id/thumbnail Retrieve a thumbnail
+@apiName GetUploadThumbnail
+@apiGroup Upload
+
+@apiParam {Number} id
+--]]
 local function handle_thumbnail_request(p)
     local id = assert(tonumber(p.id))
     local upload = assert(Upload:by_id(id))
