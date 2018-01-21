@@ -122,8 +122,8 @@ $overlay-animation: 0.2s;
     flex-wrap: wrap;
     justify-content: center;
 
-    background: linear-gradient(to bottom, fade-out($fg-neutral, .95) 1px, transparent 1px),
-                linear-gradient(to bottom, fade-out($fg-neutral, .95) 1px, transparent 1px);
+    background: linear-gradient(to top, fade-out($fg-neutral, .95) 1px, transparent 1px),
+                linear-gradient(to top, fade-out($fg-neutral, .95) 1px, transparent 1px);
     background-size: $item-size/4 $item-size/4,
                      $item-size   $item-size;
 }
