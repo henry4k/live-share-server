@@ -20,23 +20,6 @@ a
 
 html
 {
-//    background: linear-gradient(to right,  fade-out($fg-neutral, .95) 1px, transparent 1px),
-//                linear-gradient(to bottom, fade-out($fg-neutral, .95) 1px, transparent 1px),
-//                linear-gradient(to right,  fade-out($fg-neutral, .95) 1px, transparent 1px),
-//                linear-gradient(to bottom, fade-out($fg-neutral, .95) 1px, transparent 1px),
-//                linear-gradient(to bottom, $bg-top,
-//                                           $bg-bottom);
-//    background-size: $item-size/4 $item-size/4,
-//                     $item-size/4 $item-size/4,
-//                     $item-size   $item-size,
-//                     $item-size   $item-size,
-//                     100%;
-//    background-attachment: scroll,
-//                           scroll,
-//                           scroll,
-//                           scroll,
-//                           fixed;
-//    background-position: top left;
     background-image: radial-gradient(farthest-corner at top, $bg-bottom, $bg-top);
     background-attachment: fixed;
 }
@@ -117,15 +100,17 @@ $overlay-animation: 0.2s;
     flex-grow: 0;
     flex-shrink: 0;
 
-    display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
-    justify-content: center;
-
     background: linear-gradient(to top, fade-out($fg-neutral, .95) 1px, transparent 1px),
                 linear-gradient(to top, fade-out($fg-neutral, .95) 1px, transparent 1px);
     background-size: $item-size/4 $item-size/4,
                      $item-size   $item-size;
+    background-origin: content-box;
+
+    padding: $item-size/4;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
 }
 
 $entry-animation: 1s;

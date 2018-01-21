@@ -69,12 +69,14 @@ body {
 #upload-list {
   flex-grow: 0;
   flex-shrink: 0;
+  background: linear-gradient(to top, rgba(248, 246, 242, 0.05) 1px, transparent 1px), linear-gradient(to top, rgba(248, 246, 242, 0.05) 1px, transparent 1px);
+  background-size: 40px 40px, 160px 160px;
+  background-origin: content-box;
+  padding: 40px;
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
   justify-content: center;
-  background: linear-gradient(to top, rgba(248, 246, 242, 0.05) 1px, transparent 1px), linear-gradient(to top, rgba(248, 246, 242, 0.05) 1px, transparent 1px);
-  background-size: 40px 40px, 160px 160px;
 }
 
 .upload-entry {
