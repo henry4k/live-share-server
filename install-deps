@@ -1,5 +1,5 @@
 #!/bin/sh
-for dep in cjson \
+for dep in lua-cjson \
            luadbi \
            luadbi-sqlite3 \
            mimetypes \
@@ -9,5 +9,6 @@ for dep in cjson \
            middleclass \
            fat_error \
            luaposix; do
-    luarocks --local install $dep
+    echo "------------------- $dep ---------------------"
+    luarocks-5.2 --local install $dep
 done
