@@ -18,7 +18,7 @@ function database.close()
 end
 
 local function prepare(statement)
-    print(statement)
+    --print(statement)
     return assert(connection:prepare(statement))
 end
 

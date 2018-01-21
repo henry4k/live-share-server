@@ -26,10 +26,6 @@ class Upload
         this.category  = props.category_name;
         this.mediaType = props.media_type;
 
-        this.thumbnailSizePromise = loadImage(this.thumbnailUrl).then(function(image) {
-            return [image.width, image.height];
-        });
-
         // List Entry:
         const categoryEl = document.createElement('span');
         categoryEl.innerHTML = this.category;
@@ -38,6 +34,7 @@ class Upload
         authorEl.innerHTML = this.author;
 
         const listEntry = document.createElement('a');
+        listEntry.classList.add('upload-entry');
         listEntry.appendChild(categoryEl);
         listEntry.appendChild(authorEl);
         listEntry.style.backgroundImage = "url('"+this.thumbnailUrl+"')";
@@ -47,6 +44,11 @@ class Upload
             e.preventDefault();
         });
         this.listEntry = listEntry;
+
+        listEntry.classList.add('loading');
+        loadImage(this.thumbnailUrl).then(function(image) {
+            listEntry.classList.remove('loading');
+        });
     }
 
     destroy()
@@ -63,60 +65,84 @@ class Upload
     {
         return '/upload/'+this.id+'/thumbnail';
     }
-
-    async getBlurryImageUrl()
-    {
-        const self = this;
-        return this.thumbnailSizePromise.then(function(size) {
-            return '/upload/'+self.id+'/_blurry_thumbnail?width='+size[0]+'&height='+size[1];
-        });
-    }
 }
 
 
-var uploadViewElement = null;
-var uploadImageElement = null;
-var uploadVideoElement = null;
+var uploadViewElement    = null;
+var uploadImageElement   = null;
+var uploadVideoElement   = null;
 var uploadDetailsElement = null;
-var uploadListElement = null;
+var uploadListElement    = null;
 
-function appendUploadEntry(upload)
+function prependUploadEntry(upload)
 {
-    uploadListElement.appendChild(upload.listEntry);
+    const firstChild = uploadListElement.firstChild;
+    uploadListElement.insertBefore(upload.listEntry, firstChild);
 }
 
-function resetViewedUpload()
+function clearViewedUpload(e)
 {
-    uploadViewElement.style.backgroundImage = '';
     uploadImageElement.src = '';
     uploadVideoElement.src = '';
-    uploadImageElement.style.display = 'none';
-    uploadVideoElement.style.display = 'none';
+
+    uploadViewElement.removeEventListener('transitionend',    clearViewedUpload);
+    uploadViewElement.removeEventListener('transitioncancel', clearViewedUpload);
 }
 
-async function setViewedUpload(upload)
+function beginClearViewedUpload()
 {
-    resetViewedUpload();
+    uploadViewElement.classList.add('hidden');
+    uploadViewElement.addEventListener('transitionend',    clearViewedUpload);
+    uploadViewElement.addEventListener('transitioncancel', clearViewedUpload);
+}
 
-    //const blurryImageUrl = await upload.getBlurryImageUrl();
-    //uploadViewElement.style.backgroundImage = "url('"+blurryImageUrl+"')";
+function setViewedUpload(upload)
+{
+    uploadViewElement.classList.remove('hidden');
 
-    if(upload.mediaType == 'image')
+    let visibleElement;
+    let invisibleElement;
+    let loadEventName;
+    if(upload.mediaType === 'image')
     {
-        uploadImageElement.src = upload.url;
-        uploadImageElement.style.display = 'initial';
+        visibleElement   = uploadImageElement;
+        invisibleElement = uploadVideoElement;
+        loadEventName = 'load';
     }
     else
     {
-        uploadVideoElement.src = upload.url;
-        uploadVideoElement.style.display = 'initial';
+        visibleElement   = uploadVideoElement;
+        invisibleElement = uploadImageElement;
+        loadEventName = 'loadedmetadata';
     }
+
+    invisibleElement.src = '';
+    invisibleElement.style.display = 'none';
+
+    visibleElement.src = upload.url;
+    visibleElement.style.display = '';
+
+    visibleElement.addEventListener(loadEventName, function() {
+        let width, height;
+        if(upload.mediaType === 'image')
+        {
+            width  = visibleElement.naturalWidth;
+            height = visibleElement.naturalHeight;
+        }
+        else
+        {
+            width  = visibleElement.videoWidth;
+            height = visibleElement.videoHeight;
+        }
+        visibleElement.style.maxWidth  = ''+width+'px';
+        visibleElement.style.maxHeight = ''+height+'px';
+    }, {once: true});
 }
 
 function getLatestUploads(count)
 {
     const now = new Date(Date.now());
-    const url = '/upload/query?limit='+count+'&order=time&before='+now.toISOString();
+    const url = '/upload/query?limit='+count+'&order_asc=time&before='+now.toISOString();
     const request = new XMLHttpRequest();
     request.responseType = 'json';
     request.addEventListener('load', function(e)
@@ -127,7 +153,7 @@ function getLatestUploads(count)
         for(let uploadProps of request.response)
         {
             const upload = new Upload(uploadProps);
-            appendUploadEntry(upload);
+            prependUploadEntry(upload);
         }
     });
     request.open('GET', url);
@@ -136,20 +162,38 @@ function getLatestUploads(count)
 
 window.addEventListener('load', function(e)
 {
-    uploadViewElement = document.getElementById('upload-view');
-    uploadImageElement = document.getElementById('upload-image');
-    uploadVideoElement = document.getElementById('upload-video');
+    uploadViewElement    = document.getElementById('upload-view');
+    uploadImageElement   = document.getElementById('upload-image');
+    uploadVideoElement   = document.getElementById('upload-video');
     uploadDetailsElement = document.getElementById('upload-details');
-    uploadListElement = document.getElementById('upload-list');
+    uploadListElement    = document.getElementById('upload-list');
 
-    getLatestUploads(10);
+    getLatestUploads(100);
 
     const updatesEventSource = new EventSource('/updates');
     updatesEventSource.addEventListener('new-upload', function(e)
     {
         const message = JSON.parse(e.data);
         const upload = new Upload(message);
-        appendUploadEntry(upload);
+        prependUploadEntry(upload);
         setViewedUpload(upload);
+    });
+
+    uploadViewElement.addEventListener('click', function(e) {
+        beginClearViewedUpload();
+        e.preventDefault();
+    });
+    for(let childElement of uploadViewElement.childNodes)
+    {
+        childElement.addEventListener('click', function(e) {
+            e.stopPropagation();
+        });
+    }
+    window.addEventListener('keydown', function(e) {
+        if(e.key === 'Escape')
+        {
+            beginClearViewedUpload();
+            e.preventDefault();
+        }
     });
 });
