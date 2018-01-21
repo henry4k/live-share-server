@@ -12,6 +12,12 @@ local thumbnail = require'live-share.thumbnail'
 local datetime = require'live-share.datetime'
 
 
+--[[
+@api {post} /upload Upload a file.
+@apiVersion 0.1.0
+@apiName UploadFile
+@apiGroup Upload
+--]]
 server.router:post('/upload', function(p)
     local user = assert(User:get_from_request(p.request_headers))
 

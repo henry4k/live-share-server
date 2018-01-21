@@ -1,10 +1,18 @@
-#!/bin/sh
+#!/bin/bash
+set -e
 for dep in lua-cjson \
            luadbi \
            luadbi-sqlite3 \
            mimetypes \
            cqueues \
+           lpeg \
+           lpeg_patterns \
+           fifo \
            http \
+           luaossl \
+           compat53 \
+           ansicolors \
+           basexx \
            lua-path \
            middleclass \
            fat_error \
