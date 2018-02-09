@@ -1,3 +1,4 @@
+@charset "UTF-8";
 html, body {
   width: 100%;
   height: 100%;
@@ -24,7 +25,7 @@ body {
   flex-direction: column;
 }
 
-#upload-view {
+#upload-view, #error {
   position: fixed;
   top: 0;
   left: 0;
@@ -35,24 +36,27 @@ body {
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  background-color: rgba(0, 0, 0, 0.8);
   visibility: visible;
   opacity: 1;
   transition: visibility 0.2s linear, opacity 0.2s ease-out;
 }
 
-#upload-view > * {
+#upload-view > *, #error > * {
   transform: scale(1);
   transition: transform 0.2s ease-out;
 }
 
-#upload-view.hidden {
+#upload-view.hidden, #error.hidden {
   visibility: hidden;
   opacity: 0;
 }
 
-#upload-view.hidden > * {
+#upload-view.hidden > *, #error.hidden > * {
   transform: scale(0.5);
+}
+
+#upload-view {
+  background-color: rgba(0, 0, 0, 0.8);
 }
 
 #upload-image, #upload-video {
@@ -126,11 +130,16 @@ body {
   right: 0;
   margin: 1em;
   font-size: 0.7em;
-  color: #f8f6f2;
 }
 
 #source-link::before {
-  content: "..what?";
+  content: "…what?";
+}
+
+#error .status-code {
+  opacity: 0.2;
+  font-size: 1500%;
+  line-height: 90%;
 }
 
 video:focus {

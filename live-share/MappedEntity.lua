@@ -52,7 +52,7 @@ function MappedEntity.static:map_column(t)
         local pk = assert(klass._mapping.primary_key_property)
         local pk_import = pk.import
         local pk_export = pk.export
-        import = function(s) return klass:by_id(pk_import(s)) end
+        import = function(s) return assert(klass:by_id(pk_import(s))) end
         export = function(v) return pk_export(v:get_id()) end
     else
         import = t.import or pass_through
@@ -82,13 +82,32 @@ function MappedEntity.static:map_primary_key(t) -- TODO: Or 'id column'?
     mapping.primary_key_property = self:map_column(t)
 end
 
+function MappedEntity.static:cache(id, entity)
+    local mapping = self._mapping
+    if entity then
+        assert(not mapping.entities[id],
+               'There is already an entity with this ID loaded.')
+    else
+        assert(mapping.entities[id],
+               'No entity with this ID loaded.')
+    end
+    mapping.entities[id] = entity
+end
+
+-- Returns nil and an error message if no entity with this ID exists.
 function MappedEntity.static:by_id(id)
     local mapping = self._mapping
     local entity = mapping.entities[id]
     if not entity then
         entity = self:new()
         entity:set_id(id)
-        entity:read_all_properties()
+
+        local success, err = entity:read_all_properties()
+        if success then
+            self:cache(id, entity)
+        else
+            return nil, err
+        end
     end
     return entity
 end
@@ -117,7 +136,7 @@ function EntityQueryResults:next()
     if row then
         assert(#row == 1)
         local id = self.import_id(row[1])
-        return self.klass:by_id(id)
+        return assert(self.klass:by_id(id))
     end
 end
 
@@ -157,10 +176,8 @@ function MappedEntity:initialize_mapping()
 end
 
 function MappedEntity:close()
-    local mapping = self.class._mapping
     local id = self:get_id()
-    assert(mapping.entities[id])
-    mapping.entities[id] = nil
+    self.class:cache(id, nil)
 end
 
 --- Shorthand for the primary key value.
@@ -182,10 +199,6 @@ function MappedEntity:set_id(id)
     local values = self._property_state.values
     assert(not values[index], 'ID has already been set.')
     values[index] = id
-
-    assert(not mapping.entities[id],
-           'There is already an entity with this ID loaded.')
-    mapping.entities[id] = self
 end
 
 function MappedEntity:get_property_value(lua_name)
@@ -270,8 +283,6 @@ function MappedEntity:read_all_properties()
         end
     end
 
-    -- TODO: There is no need to include the primary key in the column list.
-
     local sql = string.format('SELECT %s FROM %s WHERE %s = ?',
                               table.concat(column_names, ', '),
                               mapping.table_name,
@@ -284,7 +295,10 @@ function MappedEntity:read_all_properties()
     local statement = database(sql, id)
 
     local row = statement:fetch()
-    assert(row, 'There is no entity with this ID in the database.')
+    if not row then
+        return false, 'There is no entity with this ID in the database.'
+    end
+
     assert(#row == #column_names)
     assert(statement:fetch() == nil) -- there must be no further rows
 
@@ -295,6 +309,8 @@ function MappedEntity:read_all_properties()
     end
 
     self._property_state.dirty_set = {} -- clear
+
+    return true
 end
 
 function MappedEntity:write_modified_properties()

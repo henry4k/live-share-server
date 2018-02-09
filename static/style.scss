@@ -40,7 +40,7 @@ body
 
 $overlay-animation: 0.2s;
 
-#upload-view
+#upload-view, #error
 {
     position: fixed;
     top: 0;
@@ -55,7 +55,6 @@ $overlay-animation: 0.2s;
     align-items: center;
     //align-content: center;
 
-    background-color: rgba(0, 0, 0, 0.8);
     visibility: visible;
     opacity: 1;
 
@@ -79,6 +78,11 @@ $overlay-animation: 0.2s;
 
     transition: visibility $overlay-animation linear,
                 opacity    $overlay-animation ease-out;
+}
+
+#upload-view
+{
+    background-color: rgba(0, 0, 0, 0.8);
 }
 
 #upload-image, #upload-video
@@ -179,17 +183,25 @@ $entry-animation: 1s;
 
     margin: 1em;
     font-size: 0.7em;
-    color: $fg-neutral;
-    //color: $bg-bottom;
-    //text-shadow: -1px -1px 0 $fg-neutral,
-    //              1px -1px 0 $fg-neutral,
-    //             -1px  1px 0 $fg-neutral,
-    //              1px  1px 0 $fg-neutral;
 }
 
 #source-link::before
 {
-    content: "..what?";
+    content: "…what?";
+}
+
+#error
+{
+    .status-code
+    {
+        opacity: 0.2;
+        font-size: 1500%;
+        line-height: 90%;
+    }
+
+    .message
+    {
+    }
 }
 
 // remove dotted border around clicked things:

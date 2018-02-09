@@ -3,14 +3,14 @@ local http_server = require'http.server'
 local http_headers = require'http.headers'
 local http_util = require'http.util'
 local fat_error = require'fat_error'
+local is_instance = require'live-share.utils'.is_instance
 local log = require'live-share.log'
 local Process = require'live-share.Process'
+local HttpError = require'live-share.HttpError'
 local handlers = require'live-share.handlers'
 
 
 local server_header = http_version.name..'/'..http_version.version
-local error_handler = handlers.Constant{status = '500'}
-local default_handler = handlers.Constant{status = '404'}
 local router = require'live-share.third-party.router'.new()
 
 local server = {router = router}
@@ -26,6 +26,13 @@ local function split_query_args(url_path)
     else
         return url_path, {}
     end
+end
+
+local function default_handler(p)
+    local url_path = p.request_headers:get':path'
+    local message = string.format('File not found: %s', url_path)
+    local err = HttpError(404, message)
+    return err:handle(p)
 end
 
 local function onstream(_server, stream) -- luacheck: ignore 212
@@ -54,10 +61,18 @@ local function onstream(_server, stream) -- luacheck: ignore 212
     local ok, err = fat_error.pcall(handler, params)
     if not ok then
         log.fat_error(err)
-        if stream.state == 'idle' then -- not sent headers or body yet
-            error_handler(params)
+
+        local desc = err.description
+        if not is_instance(desc, HttpError) then
+            desc = HttpError(500, desc)
+        end
+
+        if stream.state == 'idle' or
+           stream.state == 'open' or
+           stream.state == 'half closed (remote)' then -- not sent headers or body yet
+            desc:handle(params)
         else
-            response_headers:upsert(':status', '500') -- for logging
+            response_headers:upsert(':status', tostring(desc.http_status)) -- for logging
         end
     end
 

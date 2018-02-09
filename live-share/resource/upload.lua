@@ -10,6 +10,11 @@ local Category = require'live-share.model.Category'
 local Upload = require'live-share.model.Upload'
 local thumbnail = require'live-share.thumbnail'
 local datetime = require'live-share.datetime'
+local HttpError = require'live-share.HttpError'
+
+local assert_parameter = HttpError.assert.parameter
+local assert_found = HttpError.assert.found
+local assert_media_type = HttpError.assert.media_type
 
 
 --[[
@@ -21,14 +26,14 @@ local datetime = require'live-share.datetime'
 @apiParam {String} category Name of the category. (query parameter)
 --]]
 server.router:post('/upload', function(p)
-    local user = assert(User:get_from_request(p.request_headers))
+    local user = assert_parameter(User:get_from_request(p.request_headers))
 
-    local category_name = assert(p.query.category, 'Category name missing.')
+    local category_name = assert_parameter(p.query.category, 'Category name missing.')
     local category = Category:get_or_create(category_name)
 
-    local mime_type = assert(p.request_headers:get'content-type')
-    local media_type = assert(media_types.by_mime_type[mime_type],
-                              'Unknown/unsupported content type.')
+    local mime_type = assert_parameter(p.request_headers:get'content-type')
+    local media_type = assert_media_type(media_types.by_mime_type[mime_type],
+                                         'Unknown/unsupported content type.')
 
     local upload = Upload()
     upload.time = os.time()
@@ -96,7 +101,8 @@ server.router:get('/upload/query', function(p)
     local s = Upload:select()
 
     if p.query.before then
-        local time = assert(datetime.parse_iso_date_time(p.query.before))
+        local time = assert_parameter(datetime.parse_iso_date_time(p.query.before),
+                                      "Malformatted date time in 'before' field.")
         s:raw'WHERE time < ':var(time)
     end
 
@@ -129,8 +135,8 @@ end)
 @apiParam {Number} id
 --]]
 local function handle_file_request(p)
-    local id = assert(tonumber(p.id))
-    local upload = assert(Upload:by_id(id))
+    local id = assert_parameter(tonumber(p.id), 'Upload ID must be a number.')
+    local upload = assert_found(Upload:by_id(id))
     p.response_headers:append('content-type', upload.media_type.mime_type)
     return handlers.send_file(p, upload:get_file_name())
 end
@@ -145,8 +151,8 @@ server.router:head('/upload/:id', handle_file_request)
 @apiParam {Number} id
 --]]
 local function handle_thumbnail_request(p)
-    local id = assert(tonumber(p.id))
-    local upload = assert(Upload:by_id(id))
+    local id = assert_parameter(tonumber(p.id), 'Upload ID must be a number.')
+    local upload = assert_found(Upload:by_id(id))
     p.response_headers:append('content-type', upload.thumbnail_media_type.mime_type)
     return handlers.send_file(p, upload:get_thumbnail_file_name())
 end

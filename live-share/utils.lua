@@ -63,4 +63,10 @@ function utils.here(sub_path)
     end
 end
 
+function utils.is_instance(value, class)
+    if type(value) == 'table' and value.isInstanceOf then
+        return value:isInstanceOf(class)
+    end
+end
+
 return utils
