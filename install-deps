@@ -1,6 +1,7 @@
 #!/bin/bash
 set -e
-for dep in lua-cjson \
+for dep in argparse \
+           lua-cjson \
            luadbi \
            luadbi-sqlite3 \
            mimetypes \
@@ -20,3 +21,4 @@ for dep in lua-cjson \
     echo "------------------- $dep ---------------------"
     luarocks-5.2 --local install $dep
 done
+luarocks-5.2 --local install argon2 ARGON2_INCDIR=/usr/include ARGON2_LIBDIR=/usr/lib

@@ -24,6 +24,7 @@ end
 
 -- @param statement May be a string or an sqlrocks Statement instance
 function database.exec(statement, use_cache, ...)
+    print(statement)
     local ps
     if use_cache then
         ps = statement_cache[statement]

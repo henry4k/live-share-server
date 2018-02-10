@@ -72,6 +72,7 @@ local function make_assert(name, code)
 end
 
 make_assert('parameter', 400)
+make_assert('authorized', 401)
 make_assert('found', 404)
 make_assert('media_type', 415)
 

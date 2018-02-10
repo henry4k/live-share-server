@@ -1,6 +1,7 @@
 local basexx = require'basexx'
 local class = require'middleclass'
 local MappedEntity = require'live-share.MappedEntity'
+local password = require'live-share.password'
 
 
 local User = class'live-share.model.User'
@@ -9,6 +10,7 @@ User:include(MappedEntity)
 User:set_table_name'user'
 User:map_primary_key'id'
 User:map_column'name'
+User:map_column'password_hash'
 User:map_column'is_admin'
 
 function User.static:get_by_name(name)
@@ -27,25 +29,34 @@ function User.static:get_from_request(request_headers)
     end
 
     local user_info = basexx.from_base64(encoded_user_info)
-    assert(user_info, 'Malformatted authorization header.')
+    if not user_info then
+        return nil, 'Malformatted authorization header.'
+    end
 
-    local name, password = user_info:match('^(.-):(.*)$')
-    assert(name and password, 'Malformatted authorization header.')
-    --print('name: "'..name..'"')
-    --print('password: "'..password..'"')
+    local name, pw = user_info:match('^(.-):(.*)$')
+    if not name then
+        return nil, 'Malformatted authorization header.'
+    end
 
     local user = self:get_by_name(name)
     if not user then
         return nil, 'Unknown user.'
     end
 
-    -- TODO: password
+    local ok, err = password.verify(pw, user.password_hash)
+    if not ok then
+        return nil, err
+    end
 
     return user
 end
 
 function User:initialize()
     self:initialize_mapping()
+end
+
+function User:set_password_hash(pw)
+    self:set_property_value('password_hash', password.hash(pw))
 end
 
 return User

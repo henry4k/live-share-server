@@ -13,6 +13,7 @@ local datetime = require'live-share.datetime'
 local HttpError = require'live-share.HttpError'
 
 local assert_parameter = HttpError.assert.parameter
+local assert_authorized = HttpError.assert.authorized
 local assert_found = HttpError.assert.found
 local assert_media_type = HttpError.assert.media_type
 
@@ -26,7 +27,7 @@ local assert_media_type = HttpError.assert.media_type
 @apiParam {String} category Name of the category. (query parameter)
 --]]
 server.router:post('/upload', function(p)
-    local user = assert_parameter(User:get_from_request(p.request_headers))
+    local user = assert_authorized(User:get_from_request(p.request_headers))
 
     local category_name = assert_parameter(p.query.category, 'Category name missing.')
     local category = Category:get_or_create(category_name)

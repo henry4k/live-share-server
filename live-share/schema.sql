@@ -1,6 +1,11 @@
+CREATE TABLE IF NOT EXISTS settings (
+    salt TEXT
+);
+
 CREATE TABLE IF NOT EXISTS user (
     id INTEGER PRIMARY KEY,
     name VARCHAR(32) UNIQUE NOT NULL,
+    password_hash TEXT NOT NULL,
     is_admin BOOLEAN NOT NULL DEFAULT 0
 );
 

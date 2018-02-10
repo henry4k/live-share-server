@@ -15,5 +15,14 @@ return
                              '-qscale:v', '2',
                              '-huffman', 'optimal'}
     },
+    password =
+    {
+        salt_length = 32,
+        argon2_options = {t_cost = 3,
+                          m_cost = 4096,
+                          parallelism = 2,
+                          hash_len = 32,
+                          variant = 'argon2_id'}
+    },
     database = 'database.db'
 }
