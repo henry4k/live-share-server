@@ -55,8 +55,7 @@ server.router:post('/upload', function(p)
     p.response_headers:append('cache-control', utils.cache_control_dynamic)
     assert(p.stream:write_headers(p.response_headers, true))
 
-    local process = thumbnail.generate(upload)
-    assert(cqueues.poll(process))
+    thumbnail.generate(upload):wait()
 
     update_resource.notify_observers('new-upload',
                                      upload:get_resource_properties())

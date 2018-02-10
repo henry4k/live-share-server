@@ -69,4 +69,17 @@ function utils.is_instance(value, class)
     end
 end
 
+local getpid = require'posix.unistd'.getpid
+local tmp_file_counter = 0
+function utils.get_temporary_file_name(postfix)
+    tmp_file_counter = tmp_file_counter+1
+    local basename = string.format('%d-%04d%s',
+                                   getpid(),
+                                   tmp_file_counter,
+                                   postfix or '')
+    local filename = path.join(path.tmpdir(), basename)
+    assert(not path.exists(filename))
+    return filename
+end
+
 return utils

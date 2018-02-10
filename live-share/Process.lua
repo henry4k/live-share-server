@@ -34,7 +34,7 @@ end
 function Process:destroy()
     if self:is_alive() then
         self:signal('kill')
-        self:wait() -- cleanup child TODO: what about local signal handlers?
+        self:update() -- cleanup child TODO: what about local signal handlers?
     end
 end
 
@@ -44,7 +44,7 @@ function Process:signal(signal_name)
     assert(signal.kill(self._pid, signal_id))
 end
 
-function Process:wait(no_hang)
+function Process:update(no_hang)
     local options
     if no_hang then
         options = wait.WNOHANG
@@ -64,14 +64,14 @@ end
 
 function Process:is_alive()
     if self._pid then
-        self:wait(true)
+        self:update(true)
     end
     return self._pid ~= nil, self._end_type, self._end_status
 end
 
 function Process:exited_cleanly()
     if self._pid then
-        self:wait(true)
+        self:update(true)
     end
     return not self._pid and
            self._end_type == 'exited' and
@@ -182,6 +182,10 @@ function Process:_get_promise()
         self._promise = promise
     end
     return promise
+end
+
+function Process:wait(timeout)
+    self:_get_promise():wait(timeout)
 end
 
 function Process:pollfd()

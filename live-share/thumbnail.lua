@@ -1,4 +1,5 @@
 local path = require'path'
+local Promise = require'cqueues.promise'.new
 local utils = require'live-share.utils'
 local Process = require'live-share.Process'
 local config = require'config'
@@ -29,7 +30,7 @@ local function build_vips_args(input, output)
     return args
 end
 
-local function build_ffmpeg_args(input, output)
+local function build_ffmpeg_args(input, output, rescale)
     local c = config.thumbnail
     local size = c.size
     local inspected_frames = c.ffmpeg_inspected_frames or 100
@@ -37,11 +38,12 @@ local function build_ffmpeg_args(input, output)
 
     local f = string.format
     local filter = {f('thumbnail=%d',
-                      inspected_frames),
-                    f('scale=w=%d:h=%d:force_original_aspect_ratio=increase',
-                      size, size)}
-                    --f('crop=w=%d:h=%d',
-                    --  size, size)}
+                      inspected_frames)}
+    if rescale then
+        table.insert(filter,
+                     f('scale=w=%d:h=%d:force_original_aspect_ratio=decrease',
+                       size, size))
+    end
 
     local args = {'ffmpeg',
                   '-hide_banner',
@@ -58,6 +60,7 @@ local function build_ffmpeg_args(input, output)
 end
 
 function thumbnail.generate(upload)
+    local c = config.thumbnail
     local input_file_name = upload:get_file_name()
     local output_file_name = upload:get_thumbnail_file_name()
 
@@ -65,8 +68,28 @@ function thumbnail.generate(upload)
         return Process(build_vips_args(input_file_name,
                                        output_file_name))
     else -- video
-        return Process(build_ffmpeg_args(input_file_name,
-                                         output_file_name))
+        if c.rescale_videos_with_vips then
+            return Promise(function()
+                local temp_file =
+                    utils.get_temporary_file_name('.png')
+
+                local ffmpeg = Process(build_ffmpeg_args(input_file_name,
+                                                         temp_file,
+                                                         false))
+                ffmpeg:wait()
+
+                local vips = Process(build_vips_args(temp_file,
+                                                     output_file_name))
+                vips:wait()
+
+                assert(os.remove(temp_file))
+                return true
+            end)
+        else
+            return Process(build_ffmpeg_args(input_file_name,
+                                             output_file_name,
+                                             true))
+        end
     end
 end
 

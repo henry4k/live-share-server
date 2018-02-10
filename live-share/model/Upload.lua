@@ -38,6 +38,12 @@ function Upload:initialize()
     self:initialize_mapping()
 end
 
+function Upload:delete()
+    assert(os.remove(self:get_file_name()))
+    assert(os.remove(self:get_thumbnail_file_name()))
+    MappedEntity.delete(self)
+end
+
 function Upload:get_file_name()
     local base_name = tostring(self.id)..'.'..self.media_type.file_extension
     return path.join(config.upload_directory, base_name)
