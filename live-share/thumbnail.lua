@@ -70,6 +70,9 @@ function thumbnail.generate(upload)
     else -- video
         if c.rescale_videos_with_vips then
             return Promise(function()
+                -- Use ffmpeg to extract a frame and vips to create a
+                -- thumbnail from it.
+
                 local temp_file =
                     utils.get_temporary_file_name('.png')
 

@@ -1,5 +1,6 @@
 local path = require'path'
 local class = require'middleclass'
+local log = require'live-share.log'
 local MappedEntity = require'live-share.MappedEntity'
 local User = require'live-share.model.User'
 local Category = require'live-share.model.Category'
@@ -38,9 +39,16 @@ function Upload:initialize()
     self:initialize_mapping()
 end
 
+local function try_remove(file)
+    local ok, err = os.remove(file)
+    if not ok then
+        log.error(err)
+    end
+end
+
 function Upload:delete()
-    assert(os.remove(self:get_file_name()))
-    assert(os.remove(self:get_thumbnail_file_name()))
+    try_remove(self:get_file_name())
+    try_remove(self:get_thumbnail_file_name())
     MappedEntity.delete(self)
 end
 

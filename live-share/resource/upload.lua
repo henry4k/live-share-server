@@ -1,4 +1,3 @@
-local cqueues = require'cqueues'
 local utils = require'live-share.utils'
 local server = require'live-share.server'
 local handlers = require'live-share.handlers'
