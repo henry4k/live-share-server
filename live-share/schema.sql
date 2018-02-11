@@ -20,6 +20,8 @@ CREATE TABLE IF NOT EXISTS upload (
     user_id INTEGER NOT NULL,
     category_id INTEGER NOT NULL,
     media_type INTEGER NOT NULL,
+    width INTEGER NOT NULL,
+    height INTEGER NOT NULL,
     FOREIGN KEY(user_id) REFERENCES upload(id),
     FOREIGN KEY(category_id) REFERENCES category(id)
 );

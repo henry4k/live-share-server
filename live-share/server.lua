@@ -5,9 +5,7 @@ local http_util = require'http.util'
 local fat_error = require'fat_error'
 local is_instance = require'live-share.utils'.is_instance
 local log = require'live-share.log'
-local Process = require'live-share.Process'
 local HttpError = require'live-share.HttpError'
-local handlers = require'live-share.handlers'
 
 
 local server_header = http_version.name..'/'..http_version.version
@@ -42,7 +40,7 @@ local function onstream(_server, stream) -- luacheck: ignore 212
     local url_path = request_headers:get':path'
     local query_args
 
-    url_path, query_args = split_query_args(url_path, query_args)
+    url_path, query_args = split_query_args(url_path)
 
     local response_headers = http_headers.new()
     response_headers:append('server', server_header)
@@ -102,8 +100,6 @@ function server.run(t)
         local bound_port = select(3, instance:localname())
         log.info('Now listening on port ', tostring(bound_port))
     end
-
-    Process:start_signal_watcher(instance.cq)
 
     -- Start the main server loop
     assert(instance:loop())

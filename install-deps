@@ -1,24 +1,81 @@
 #!/bin/bash
 set -e
-for dep in argparse \
-           lua-cjson \
-           luadbi \
-           luadbi-sqlite3 \
-           mimetypes \
-           cqueues \
-           lpeg \
-           lpeg_patterns \
-           fifo \
-           http \
-           luaossl \
-           compat53 \
-           ansicolors \
-           basexx \
-           lua-path \
-           middleclass \
-           fat_error \
-           luaposix; do
-    echo "------------------- $dep ---------------------"
-    luarocks-5.2 --local install $dep
-done
-luarocks-5.2 --local install argon2 ARGON2_INCDIR=/usr/include ARGON2_LIBDIR=/usr/lib
+
+function echoerr
+{
+    echo $@ 1>&2
+}
+
+function require_program
+{
+    local program="$1"
+    if which "$program" >/dev/null; then
+        echo "found $program"
+    else
+        echoerr "$program is missing"
+        exit 1
+    fi
+}
+
+function require_file
+{
+    local file="$1"
+    if [ -e "$file" ]; then
+        echo "$file exists"
+    else
+        echoerr "$file is missing"
+        exit 1
+    fi
+}
+
+function install_lua_package
+{
+    local lua_version="$1"
+    local package="$2"
+    shift 2
+    echo "------------------- $package ---------------------"
+    "luarocks-$lua_version" --local install "$package" $@
+}
+
+function install_lua_packages
+{
+    local lua_version="$1"
+    shift 1
+    for package in $@; do
+        install_lua_package "$lua_version" "$package"
+    done
+}
+
+require_program lua5.2
+require_program luarocks-5.2
+require_program luajit # used by postprocess-image
+require_program luarocks-5.1 # used by luajit
+require_program ffmpeg
+
+require_file /usr/include/argon2.h
+require_file /usr/lib/libargon2.so
+
+install_lua_packages 5.2 argparse \
+                         lua-cjson \
+                         luadbi \
+                         luadbi-sqlite3 \
+                         mimetypes \
+                         cqueues \
+                         lpeg \
+                         lpeg_patterns \
+                         fifo \
+                         http \
+                         luaossl \
+                         compat53 \
+                         ansicolors \
+                         basexx \
+                         lua-path \
+                         middleclass \
+                         fat_error \
+                         luaposix \
+                         xcq-subprocess
+
+install_lua_package 5.2 argon2 ARGON2_INCDIR=/usr/include ARGON2_LIBDIR=/usr/lib
+
+install_lua_packages 5.1 lua-vips \
+                         lua-cjson

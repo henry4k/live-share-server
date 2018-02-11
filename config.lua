@@ -9,12 +9,10 @@ return
         directory = 'thumbnails',
         size = 160,
         image_type = 'jpeg',
-        vips_format_options = 'optimize_coding,strip,interlace',
-        vipsthumbnail_extra_args = {}, -- {'--smartcrop', 'centre'},
-        ffmpeg_extra_args = {}, -- {'-codec:v', 'mjpeg',
-                                --  '-qscale:v', '2',
-                                --  '-huffman', 'optimal'}
-        rescale_videos_with_vips = true
+        vips_format_options = {optimize_coding=true,
+                               strip=true,
+                               interlace=true},
+        ffmpeg_extra_args = {}
     },
     password =
     {

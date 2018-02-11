@@ -26,6 +26,8 @@ Upload:map_column{'media_type',
                   export = function(type)
                       return type.id
                   end}
+Upload:map_column'width'
+Upload:map_column'height'
 
 do
     local image_type = config.thumbnail.image_type
@@ -67,7 +69,9 @@ function Upload:get_resource_properties()
             time = datetime.compose_iso_date_time(self.time),
             user_name = self.user.name,
             category_name = self.category.name,
-            media_type = self.media_type.type}
+            media_type = self.media_type.type,
+            width = self.width,
+            height = self.height}
 end
 
 return Upload

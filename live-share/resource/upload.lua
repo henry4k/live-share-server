@@ -40,7 +40,6 @@ server.router:post('/upload', function(p)
     upload.user = user
     upload.category = category
     upload.media_type = media_type
-    upload:create_entity()
 
     local file_name = upload:get_file_name()
 
@@ -48,13 +47,16 @@ server.router:post('/upload', function(p)
     p.stream:save_body_to_file(file)
     file:close()
 
+    local metadata = thumbnail.generate(upload):get()
+    upload.width  = assert(metadata.width)
+    upload.height = assert(metadata.height)
+
+    upload:create_entity()
     database.commit()
 
     p.response_headers:append(':status', '200')
     p.response_headers:append('cache-control', utils.cache_control_dynamic)
     assert(p.stream:write_headers(p.response_headers, true))
-
-    thumbnail.generate(upload):wait()
 
     update_resource.notify_observers('new-upload',
                                      upload:get_resource_properties())
