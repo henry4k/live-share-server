@@ -1,3 +1,4 @@
+local config = require'config'
 local utils = require'live-share.utils'
 local server = require'live-share.server'
 local handlers = require'live-share.handlers'
@@ -41,17 +42,37 @@ server.router:post('/upload', function(p)
     upload.category = category
     upload.media_type = media_type
 
-    local file_name = upload:get_file_name()
+    local temp_upload_file_name =
+        utils.get_temporary_file_name{
+            dir = config.upload_directory,
+            prefix = 'tmp',
+            postfix = '.'..upload.media_type.file_extension}
 
-    local file = assert(io.open(file_name, 'w'))
-    p.stream:save_body_to_file(file)
-    file:close()
+    local temp_thumbnail_file_name =
+        utils.get_temporary_file_name{
+            dir = config.thumbnail.directory,
+            prefix = 'tmp',
+            postfix = '.'..upload.thumbnail_media_type.file_extension}
 
-    local metadata = thumbnail.generate(upload):get()
+    -- TODO: Files need to be removed when something goes wrong!
+
+    local temp_upload_file = assert(io.open(temp_upload_file_name, 'w'))
+    p.stream:save_body_to_file(temp_upload_file)
+    temp_upload_file:close()
+
+    local metadata = thumbnail.generate(upload.media_type,
+                                        temp_upload_file_name,
+                                        temp_thumbnail_file_name):get()
     upload.width  = assert(metadata.width)
     upload.height = assert(metadata.height)
 
     upload:create_entity()
+    -- Now the upload entity is complete and can be used:
+    assert(os.rename(temp_upload_file_name,
+                     upload:get_file_name()))
+    assert(os.rename(temp_thumbnail_file_name,
+                     upload:get_thumbnail_file_name()))
+
     database.commit()
 
     p.response_headers:append(':status', '200')

@@ -68,23 +68,20 @@ local function extract_image_from_video(input, output)
     wait_for_process(process)
 end
 
-function thumbnail.generate(upload)
-    local input_file = upload:get_file_name()
-    local output_file = upload:get_thumbnail_file_name()
-
-    if upload.media_type.type == 'image' then
+function thumbnail.generate(media_type, file, thumbnail_file)
+    if media_type.type == 'image' then
         return Promise(function()
-            return analyze_and_generate_thumbnail(input_file,
-                                                  output_file)
+            return analyze_and_generate_thumbnail(file,
+                                                  thumbnail_file)
         end)
     else -- video
         return Promise(function()
             local temp_file =
-                utils.get_temporary_file_name('.png')
+                utils.get_temporary_file_name{postfix='.png'}
 
-            extract_image_from_video(input_file, temp_file)
+            extract_image_from_video(file, temp_file)
             local metadata = analyze_and_generate_thumbnail(temp_file,
-                                                            output_file)
+                                                            thumbnail_file)
 
             assert(os.remove(temp_file))
             return metadata

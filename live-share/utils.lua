@@ -71,13 +71,20 @@ end
 
 local getpid = require'posix.unistd'.getpid
 local tmp_file_counter = 0
-function utils.get_temporary_file_name(postfix)
+
+---
+-- @tparam[opt=''] postfix
+-- @tparam[opt=''] prefix
+-- @tparam[opt] dir Defaults to the systems temp directory.
+function utils.get_temporary_file_name(t)
+    local dir = t.dir or path.tmpdir()
     tmp_file_counter = tmp_file_counter+1
-    local basename = string.format('%d-%04d%s',
+    local basename = string.format('%s%d-%04d%s',
+                                   t.prefix or '',
                                    getpid(),
                                    tmp_file_counter,
-                                   postfix or '')
-    local filename = path.join(path.tmpdir(), basename)
+                                   t.postfix or '')
+    local filename = path.join(dir, basename)
     assert(not path.exists(filename))
     return filename
 end
