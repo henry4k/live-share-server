@@ -25,6 +25,8 @@ class Upload
         this.author    = props.user_name;
         this.category  = props.category_name;
         this.mediaType = props.media_type;
+        this.width     = props.width;
+        this.height    = props.height;
 
         // List Entry:
         const categoryEl = document.createElement('span');
@@ -67,12 +69,82 @@ class Upload
     }
 }
 
+class MediaView
+{
+    constructor(element)
+    {
+        this.element = element;
+        this.eventTarget = new EventTarget();
+    }
 
-var uploadViewElement    = null;
-var uploadImageElement   = null;
-var uploadVideoElement   = null;
-var uploadDetailsElement = null;
-var uploadListElement    = null;
+    addEventListener()
+    {
+        this.eventTarget.addEventListener(...arguments);
+    }
+
+    removeEventListener()
+    {
+        this.eventTarget.removeEventListener(...arguments);
+    }
+
+    set(sourceUrl, width, height)
+    {
+        this._setupReadyEvent();
+
+        this.element.src = sourceUrl;
+        this.element.style.maxWidth  = ''+width+'px';
+        this.element.style.maxHeight = ''+height+'px';
+        this.show();
+    }
+
+    reset()
+    {
+        //this._cancelReadyEvent(); // HMMMM!
+
+        this.hide();
+        this.element.src = '';
+        this.element.style.maxWidth  = '';
+        this.element.style.maxHeight = '';
+    }
+
+    show()
+    {
+        this.element.style.display = '';
+    }
+
+    hide()
+    {
+        this.element.style.display = 'none';
+    }
+}
+
+class ImageView extends MediaView
+{
+    constructor(element)
+    {
+        super(element);
+    }
+
+    _setupReadyEvent()
+    {
+        //this.element.addEventListener('load', )
+    }
+}
+
+class VideoView extends MediaView
+{
+    constructor(element)
+    {
+        super(element);
+    }
+}
+
+var uploadViewElement        = null;
+var uploadPlaceholderElement = null;
+var uploadImage              = null;
+var uploadVideo              = null;
+var uploadDetailsElement     = null;
+var uploadListElement        = null;
 
 function prependUploadEntry(upload)
 {
@@ -80,11 +152,36 @@ function prependUploadEntry(upload)
     uploadListElement.insertBefore(upload.listEntry, firstChild);
 }
 
+function setUploadPlaceholder(imageUrl, width, height)
+{
+    const element = uploadPlaceholderElement;
+    element.src = imageUrl;
+    element.style.display = '';
+    element.style.width  = ''+width+'px';
+    element.style.height = ''+height+'px';
+}
+
+function clearUploadPlaceholder(e)
+{
+    const element = uploadPlaceholderElement;
+    element.src = '';
+    element.style.display = 'none';
+    element.removeEventListener('transitionend',    clearUploadPlaceholder);
+    element.removeEventListener('transitioncancel', clearUploadPlaceholder);
+}
+
+function beginClearUploadPlaceholder()
+{
+    const element = uploadPlaceholderElement;
+    element.classList.add('hidden');
+    element.addEventListener('transitionend',    clearUploadPlaceholder);
+    element.addEventListener('transitioncancel', clearUploadPlaceholder);
+}
+
 function clearViewedUpload(e)
 {
-    uploadImageElement.src = '';
-    uploadVideoElement.src = '';
-
+    uploadImage.reset();
+    uploadVideo.reset();
     uploadViewElement.removeEventListener('transitionend',    clearViewedUpload);
     uploadViewElement.removeEventListener('transitioncancel', clearViewedUpload);
 }
@@ -98,45 +195,18 @@ function beginClearViewedUpload()
 
 function setViewedUpload(upload)
 {
-    uploadViewElement.classList.remove('hidden');
+    setUploadPlaceholder(upload.thumbnailUrl,
+                         upload.width,
+                         upload.height);
 
-    let visibleElement;
-    let invisibleElement;
-    let loadEventName;
+    let mediaView;
     if(upload.mediaType === 'image')
-    {
-        visibleElement   = uploadImageElement;
-        invisibleElement = uploadVideoElement;
-        loadEventName = 'load';
-    }
+        mediaView = uploadImage;
     else
-    {
-        visibleElement   = uploadVideoElement;
-        invisibleElement = uploadImageElement;
-        loadEventName = 'loadedmetadata';
-    }
+        mediaView = uploadVideo;
+    mediaView.set(upload.url, upload.width, upload.height);
 
-    invisibleElement.src = '';
-    invisibleElement.style.display = 'none';
-
-    visibleElement.src = upload.url;
-    visibleElement.style.display = '';
-
-    visibleElement.addEventListener(loadEventName, function() {
-        let width, height;
-        if(upload.mediaType === 'image')
-        {
-            width  = visibleElement.naturalWidth;
-            height = visibleElement.naturalHeight;
-        }
-        else
-        {
-            width  = visibleElement.videoWidth;
-            height = visibleElement.videoHeight;
-        }
-        visibleElement.style.maxWidth  = ''+width+'px';
-        visibleElement.style.maxHeight = ''+height+'px';
-    }, {once: true});
+    uploadViewElement.classList.remove('hidden');
 }
 
 function getLatestUploads(count)
@@ -162,11 +232,15 @@ function getLatestUploads(count)
 
 window.addEventListener('load', function(e)
 {
-    uploadViewElement    = document.getElementById('upload-view');
-    uploadImageElement   = document.getElementById('upload-image');
-    uploadVideoElement   = document.getElementById('upload-video');
-    uploadDetailsElement = document.getElementById('upload-details');
-    uploadListElement    = document.getElementById('upload-list');
+    uploadViewElement        = document.getElementById('upload-view');
+    uploadPlaceholderElement = document.getElementById('upload-placeholder');
+    uploadImage              = new ImageView(document.getElementById('upload-image'));
+    uploadVideo              = new VideoView(document.getElementById('upload-video'));
+    uploadDetailsElement     = document.getElementById('upload-details');
+    uploadListElement        = document.getElementById('upload-list');
+
+    uploadImage.reset();
+    uploadVideo.reset();
 
     getLatestUploads(100);
 

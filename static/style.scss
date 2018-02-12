@@ -85,12 +85,30 @@ $overlay-animation: 0.2s;
     background-color: rgba(0, 0, 0, 0.8);
 }
 
-#upload-image, #upload-video
+#upload-placeholder, #upload-image, #upload-video
 {
     flex: 1 1 auto;
 
     border-radius: $border-radius;
-    box-shadow: 0 0 20px black;
+    box-shadow: 0 0 20px black; // TODO: Create container element for placeholder,image/video.
+}
+
+#upload-placeholder
+{
+    position: absolute;
+    z-index: 1;
+
+    visibility: visible;
+    opacity: 1;
+
+    &.hidden
+    {
+        visibility: hidden;
+        opacity: 0;
+    }
+
+    transition: visibility $overlay-animation linear,
+                opacity    $overlay-animation ease-out;
 }
 
 .upload-details

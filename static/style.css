@@ -59,10 +59,23 @@ body {
   background-color: rgba(0, 0, 0, 0.8);
 }
 
-#upload-image, #upload-video {
+#upload-placeholder, #upload-image, #upload-video {
   flex: 1 1 auto;
   border-radius: 0;
   box-shadow: 0 0 20px black;
+}
+
+#upload-placeholder {
+  position: absolute;
+  z-index: 1;
+  visibility: visible;
+  opacity: 1;
+  transition: visibility 0.2s linear, opacity 0.2s ease-out;
+}
+
+#upload-placeholder.hidden {
+  visibility: hidden;
+  opacity: 0;
 }
 
 .upload-details {
