@@ -1,5 +1,7 @@
 local path = require'path'
 local cjson = require'cjson'
+local cqueeus = require'cqueues'
+local signal = require'cqueues.signal'
 
 
 local utils = {}
@@ -87,6 +89,29 @@ function utils.get_temporary_file_name(t)
     local filename = path.join(dir, basename)
     assert(not path.exists(filename))
     return filename
+end
+
+function utils.on_shutdown_signal(callback)
+    local cqueue = assert(cqueues.running())
+    local signal_set = {signal.SIGTERM, signal.SIGINT}
+    local signal_listener = signal.listen(table.unpack(signal_set))
+    signal.block(table.unpack(signal_set))
+    cqueue:wrap(function()
+        signal_listener:wait()
+        callback()
+    end)
+end
+
+function utils.get_systemd_listen_fds()
+    local count = os.getenv'LISTEN_FDS'
+    if count then
+        count = assert(tonumber(count))
+        local fds = {}
+        for i = 1, count do
+            fds[i] = 2+i -- SD_LISTEN_FDS_START == 3
+        end
+        return table.unpack(fds)
+    end
 end
 
 return utils
