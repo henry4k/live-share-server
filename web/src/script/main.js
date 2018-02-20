@@ -1,5 +1,5 @@
-//import { Observable } from 'rxjs';
-
+import { Observable } from 'rxjs';
+import { createStore } from './utils';
 import { Upload } from './Upload';
 import { ImageView, VideoView } from './MediaView';
 
@@ -75,16 +75,41 @@ function getLatestUploads(count) {
         if(request.responseType !== 'json')
             throw new Error('Invalid response type.');
 
-        for(let uploadProps of request.response) {
+        request.response.every(uploadProps => {
             const upload = new Upload(uploadProps);
             prependUploadEntry(upload);
-        }
+        });
     });
     request.open('GET', url);
     request.send();
 }
 
+import { List } from 'immutable';
+
+function testRx() {
+    const pressX = Observable.fromEvent(window, 'keydown')
+        .filter(e => e.key === 'x');
+
+    const pressY = Observable.fromEvent(window, 'keydown')
+        .filter(e => e.key === 'y');
+
+    let i = 1;
+
+    // generates state changing functions
+    const increase = pressX.map(() => oldState => oldState.push(i++));
+    const decrease = pressY.map(() => oldState => oldState.shift());
+
+    const store = createStore(List());
+    increase.subscribe(store);
+    decrease.subscribe(store);
+
+    store.map(state => state.toJS())
+         .subscribe(console.log);
+}
+
 window.addEventListener('load', function(e) {
+    testRx();
+/*
     uploadViewElement        = document.getElementById('upload-view');
     uploadPlaceholderElement = document.getElementById('upload-placeholder');
     uploadImage              = new ImageView(document.getElementById('upload-image'));
@@ -98,25 +123,28 @@ window.addEventListener('load', function(e) {
     getLatestUploads(100);
 
     const updatesEventSource = new EventSource('/updates');
-    updatesEventSource.addEventListener('new-upload', function(e) {
-        const message = JSON.parse(e.data);
-        const upload = new Upload(message);
-        prependUploadEntry(upload);
-        setViewedUpload(upload);
-    });
+    Observable.fromEvent(updatesEventSource, 'new-upload')
+        .subscribe(function(e) {
+            const message = JSON.parse(e.data);
+            const upload = new Upload(message);
+            prependUploadEntry(upload);
+            setViewedUpload(upload);
+        });
 
-    uploadViewElement.addEventListener('click', function(e) { beginClearViewedUpload();
+    uploadViewElement.addEventListener('click', function(e) {
+        beginClearViewedUpload();
         e.preventDefault();
     });
-    for(let childElement of uploadViewElement.childNodes) {
+    uploadViewElement.childNodes.every(childElement => {
         childElement.addEventListener('click', function(e) {
             e.stopPropagation();
         });
-    }
-    window.addEventListener('keydown', function(e) {
-        if(e.key === 'Escape') {
+    });
+    Observable.fromEvent(window, 'keydown')
+        .filter(e => e.key === 'Escape')
+        .subscribe(function(e) {
             beginClearViewedUpload();
             e.preventDefault();
-        }
-    });
+        });
+*/
 });
