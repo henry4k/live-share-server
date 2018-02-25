@@ -1,0 +1,8 @@
+version: '3'
+services:
+    live-share-server:
+        build: .
+        ports:
+        - "80:8080"
+        volumes:
+        - .:/live-share-server

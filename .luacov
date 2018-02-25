@@ -1,0 +1,9 @@
+include =
+{
+    '^src/lua/live-share'
+}
+modules =
+{
+    ['live-share.*'] = 'src/lua/live-share'
+}
+-- vim: set filetype=lua:

@@ -71,6 +71,16 @@ function getLatestUploads(count) {
     const url = '/upload/query?limit='+count+'&order_asc=time&before='+now.toISOString();
     const request = new XMLHttpRequest();
     request.responseType = 'json';
+
+    Observable.fromEvent(request, 'load')
+        .do(() => {
+            if(request.responseType !== 'json')
+                throw new Error('Invalid response type.');
+        })
+        .mergeMap(() => Observable.from(request.response)) // unpack received array
+        .map(uploadProps => new Upload(uploadProps))
+        .subscribe(prependUploadEntry);
+    /*
     request.addEventListener('load', function(e) {
         if(request.responseType !== 'json')
             throw new Error('Invalid response type.');
@@ -80,6 +90,7 @@ function getLatestUploads(count) {
             prependUploadEntry(upload);
         });
     });
+    */
     request.open('GET', url);
     request.send();
 }

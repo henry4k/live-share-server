@@ -13,7 +13,6 @@
         "file-loader": "^1.1.6",
         "html-loader": "^0.5.5",
         "immutable": "^3.8.2",
-        "kefir": "^3.8.1",
         "node-sass": "^4.7.2",
         "rxjs": "^6.0.0-alpha.3",
         "sass-loader": "^6.0.6",
