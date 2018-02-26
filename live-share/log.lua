@@ -31,7 +31,10 @@ local request_properties =
     response_status = function(_, __, response_headers)
         local status = response_headers:get':status'
         local status_color
-        if status:match'^2' then
+        if not status then
+            status = '...'
+            status_color = 'dim white'
+        elseif status:match'^2' then
             status_color = 'green'
         elseif status:match'^5' then
             status_color = 'red'
@@ -41,7 +44,7 @@ local request_properties =
         return string.format('%%{%s}%s%%{reset}', status_color, status)
     end,
 
-    response_size = function(_, __, response_headers)
+    response_length = function(_, __, response_headers)
         return response_headers:get'content-length' -- TODO
     end,
 
@@ -51,19 +54,28 @@ local request_properties =
 }
 
 -- NCSA combined log format (without cookie):
---local request_log_format = '%{client_address} - %{user_id} [%{time}] "%{method} %{path} HTTP/%{protocol_version}" %{response_status} %{response_size} "%{referer}" "%{user_agent}"'
+--local request_log_format = '%{client_address} - %{user_id} [%{time}] "%{method} %{path} HTTP/%{protocol_version}" %{response_status} %{response_length} "%{referer}" "%{user_agent}"'
 
 -- Lapis log format:
 local request_log_format = '[%{response_status}] %{bright}%{cyan}%{method} %{path}%{reset}'
 
-function log.request(stream, request_headers, response_headers)
+local function create_request_log_line(stream, request_headers, response_headers)
     local message = request_log_format:gsub('%%{(.-)}', function(property)
         local getter = request_properties[property]
         if getter then
             return getter(stream, request_headers, response_headers) or '-'
         end
     end)
-    out_file:write(colors(message), '\n')
+    return colors(message)
+end
+
+-- This is intended for long running requests.
+function log.new_request(stream, ...)
+    log.info(create_request_log_line(stream, ...))
+end
+
+function log.completed_request(stream, ...)
+    log.info(create_request_log_line(stream, ...))
 end
 
 function log.info(...)

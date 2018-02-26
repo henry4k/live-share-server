@@ -1,6 +1,7 @@
 local condition = require'cqueues.condition'
 local EventStream = require'live-share.EventStream'
 local server = require'live-share.server'
+local log = require'live-share.log'
 
 
 local update_resource = {}
@@ -23,6 +24,8 @@ end
 @apiGroup Update
 --]]
 server.router:get('/updates', function(p)
+    log.new_request(p.stream, p.request_headers, p.response_headers)
+
     local stream = p.stream
     local connection = stream.connection
     local socket = connection.socket

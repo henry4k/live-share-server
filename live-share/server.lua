@@ -74,7 +74,7 @@ local function onstream(_server, stream) -- luacheck: ignore 212
         end
     end
 
-    log.request(stream, request_headers, response_headers)
+    log.completed_request(stream, request_headers, response_headers)
 end
 
 local function onerror(_server, context, op, err, errno) -- luacheck: ignore 212
