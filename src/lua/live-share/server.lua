@@ -1,3 +1,4 @@
+local cqueues_socket = require'cqueues.socket'
 local http_version = require'http.version'
 local http_server = require'http.server'
 local http_headers = require'http.headers'
@@ -85,24 +86,36 @@ local function onerror(_server, context, op, err, errno) -- luacheck: ignore 212
     log.error(msg)
 end
 
+local server_instance
 function server.run(t)
     t = t or {}
-    t.port = t.port or 0
-    t.host = t.host or 'localhost'
     t.onstream = onstream
     t.onerror = onerror
 
-    local instance = assert(http_server.listen(t))
+    local listen_fd = utils.get_systemd_listen_fds()
+    if listen_fd then
+        local socket = assert(cqueues_socket.fdopen(listen_fd))
+        t.socket = socket
 
-    -- Manually call :listen() so that we are bound before calling :localname()
-    assert(instance:listen())
-    do
-        local bound_port = select(3, instance:localname())
-        log.info('Now listening on port ', tostring(bound_port))
+        server_instance = assert(http_server.new(t))
+    else
+        t.port = t.port or 0
+        t.host = t.host or 'localhost'
+
+        server_instance = assert(http_server.listen(t))
+
+        -- Manually call :listen() so that we are bound before calling :localname()
+        assert(server_instance:listen())
     end
 
-    -- Start the main server loop
-    assert(instance:loop())
+    do
+        local bound_port = select(3, server_instance:localname())
+        log.info('Now listening on port ', tostring(bound_port))
+    end
+end
+
+function server.stop()
+    server_instance:stop()
 end
 
 return server

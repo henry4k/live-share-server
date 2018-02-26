@@ -1,0 +1,3 @@
+#!/bin/sh
+luacov-console src/lua/live-share
+luacov-console -s

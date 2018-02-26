@@ -1,0 +1,9 @@
+project = 'live-share-server'
+format = 'markdown'
+topics = { 'README.md' }
+package = 'live-share'
+file = 'src/lua/live-share'
+not_luadoc = true
+--no_space_before_args = true
+--sort_modules = true
+-- vim: set filetype=lua:

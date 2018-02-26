@@ -1,13 +1,13 @@
 #!/usr/bin/env lua5.2
+error'This is outdated and needs to be rewritten!'
+package.path = 'lua/?.lua;'..package.path
+
 local cqueues = require'cqueues'
 local database = require'live-share.database'
-local Process = require'live-share.Process'
 local Upload = require'live-share.model.Upload'
 local thumbnail = require'live-share.thumbnail'
 
 local cq = cqueues.new()
-
-Process:start_signal_watcher(cq)
 
 cq:wrap(function()
     local process_set = {}
