@@ -1,48 +1,94 @@
-#!/bin/bash
+#!/bin/sh
 set -e
-cd "$(dirname "$0")"
-source utils.bash
 
+here="$(dirname "$0")"
+. "$here/utils.sh"
 
-function install-lua-package
+# Default values:
+lua_tree=
+luajit_tree=
+
+while true; do
+    case "$1" in
+        --lua-luarocks)
+            lua_luarocks="$2"
+            shift 2
+            ;;
+
+        --lua-tree)
+            lua_tree="$2"
+            shift 2
+            ;;
+
+        --luajit-luarocks)
+            luajit_luarocks="$2"
+            shift 2
+            ;;
+
+        --luajit-tree)
+            luajit_tree="$2"
+            shift 2
+            ;;
+
+        *)
+            break
+            ;;
+    esac
+done
+
+set -u
+
+install_lua_package()
 {
-    local lua_version="$1"
-    local package="$2"
-    shift 2
+    local luarocks="$1"
+    local tree="$2"
+    local package="$3"
+    shift 3
+
+    if [ "$tree" = '' ]; then
+        local tree_arg='--local'
+    else
+        local tree_arg="--tree $tree"
+    fi
+
     echo "------------------- $package ---------------------"
-    "luarocks-$lua_version" --local install "$package" $@
+    "$luarocks" $tree_arg install "$package" $@
 }
 
-function install-lua-packages
+install_lua_packages()
 {
-    local lua_version="$1"
-    shift 1
+    local luarocks="$1"
+    local tree="$2"
+    shift 2
     for package in $@; do
-        install-lua-package "$lua_version" "$package"
+        install_lua_package "$luarocks" "$tree" "$package"
     done
 }
 
-install-lua-packages 5.2 argparse \
-                         lua-cjson \
-                         luadbi \
-                         luadbi-sqlite3 \
-                         mimetypes \
-                         cqueues \
-                         lpeg \
-                         lpeg_patterns \
-                         fifo \
-                         http \
-                         luaossl \
-                         compat53 \
-                         ansicolors \
-                         basexx \
-                         lua-path \
-                         middleclass \
-                         fat_error \
-                         luaposix \
-                         xcq-subprocess
+install_lua_packages "$lua_luarocks" "$lua_tree" \
+    argparse \
+    lua-cjson \
+    luadbi \
+    luadbi-sqlite3 \
+    mimetypes \
+    cqueues \
+    lpeg \
+    lpeg_patterns \
+    fifo \
+    http \
+    luaossl \
+    compat53 \
+    ansicolors \
+    basexx \
+    lua-path \
+    middleclass \
+    fat_error \
+    luaposix \
+    xcq-subprocess
 
-install-lua-package 5.2 argon2 ARGON2_INCDIR=/usr/include ARGON2_LIBDIR=/usr/lib
+install_lua_package "$lua_luarocks" "$lua_tree" \
+    argon2 ARGON2_INCDIR=/usr/include ARGON2_LIBDIR=/usr/lib
 
-install-lua-packages 5.1 lua-vips \
-                         lua-cjson
+install_lua_packages "$luajit_luarocks" "$luajit_tree" \
+    lua-vips \
+    lua-cjson

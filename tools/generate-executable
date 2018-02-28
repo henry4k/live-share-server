@@ -1,0 +1,69 @@
+#!/bin/sh
+set -e
+
+here="$(dirname "$0")"
+. "$here/utils.sh"
+
+while true; do
+    case "$1" in
+        -o | --output)
+            file="$2"
+            shift 2
+            ;;
+
+        --lib-dir)
+            lib_dir="$2"
+            shift 2
+            ;;
+
+        --data-dir)
+            data_dir="$2"
+            shift 2
+            ;;
+
+        --lua)
+            lua="$2"
+            shift 2
+            ;;
+
+        --package)
+            package="$2"
+            shift 2
+            ;;
+
+        *)
+            break
+            ;;
+    esac
+done
+
+set -u
+
+# Resolve paths relative to file:
+#resolve_paths()
+#{
+#    local base_dir="$1"
+#    shift 1
+#    realpath --canonicalize-missing \
+#             --no-symlinks \
+#             "--relative-base=$base_dir" \
+#             $@
+#}
+#file_dir="$(dirname "$file")"
+#lib_dir="$(resolve_paths "$file_dir" "$lib_dir")"
+#data_dir="$(resolve_paths "$file_dir" "$data_dir")"
+
+if echo "$lua" | matches_regex_pattern '^/'; then
+    shebang="$lua"
+else
+    shebang="/usr/bin/env $lua"
+fi
+
+cat >"$file" <<EOF
+#!$shebang
+_LIVE_SHARE_LIB_DIR = '$lib_dir'
+_LIVE_SHARE_DATA_DIR = '$data_dir'
+package.path = _LIVE_SHARE_LIB_DIR..'/lua;'..package.path
+require'$package'
+EOF
+chmod +x "$file"

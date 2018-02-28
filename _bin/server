@@ -1,5 +1,5 @@
 #!/usr/bin/env lua5.2
-dofile'lua/setup.lua'(function()
+dofile'../src/lua/setup.lua'(function()
     local database = require'live-share.database'
     local server = require'live-share.server'
     local config = require'config'
