@@ -1,6 +1,6 @@
 local path = require'path'
 local cjson = require'cjson'
-local cqueeus = require'cqueues'
+local cqueues = require'cqueues'
 local signal = require'cqueues.signal'
 
 
@@ -71,7 +71,7 @@ function utils.is_instance(value, class)
     end
 end
 
-local getpid = require'posix.unistd'.getpid
+local tmp_file_process_id = math.random(0, 9999)
 local tmp_file_counter = 0
 
 ---
@@ -83,7 +83,7 @@ function utils.get_temporary_file_name(t)
     tmp_file_counter = tmp_file_counter+1
     local basename = string.format('%s%d-%04d%s',
                                    t.prefix or '',
-                                   getpid(),
+                                   tmp_file_process_id,
                                    tmp_file_counter,
                                    t.postfix or '')
     local filename = path.join(dir, basename)
