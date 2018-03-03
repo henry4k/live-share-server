@@ -1,0 +1,10 @@
+#!/usr/bin/env lua5.2
+-- To use this you need to install all dependencies and compile the required
+-- project files (static web content and native libraries).  Also make sure
+-- that the package search path is set up correctly, so that Lua is able to
+-- the dependencies.
+
+--package.path = '?.lua;'..package.path
+--package.cpath = '?.so;'..package.cpath
+
+dofile'live-share/cli.lua'

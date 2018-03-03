@@ -1,3 +1,4 @@
 #!/bin/sh
+set -o errexit
 luacov-console src/lua/live-share
 luacov-console -s

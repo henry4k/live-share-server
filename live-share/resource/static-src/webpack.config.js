@@ -12,7 +12,7 @@ function relativePath(sub) {
 }
 
 const nodeLibs = ['rxjs', 'immutable'];
-const outputPath = relativePath('dist');
+const outputPath = relativePath('../static');
 const generateSourceMaps = true;
 const minimize = true;
 
@@ -41,9 +41,9 @@ module.exports = function(env) {
             })
         ],
         entry: [
-            relativePath('src/script/main.js'),
-            relativePath('src/index.html'),
-            relativePath('src/style.scss')
+            relativePath('script/main.js'),
+            relativePath('index.html'),
+            relativePath('style.scss')
         ],
         output: {
             path: outputPath,
@@ -55,7 +55,7 @@ module.exports = function(env) {
                 {
                     test: [/\.js$/],
                     loader: 'babel-loader',
-                    include: relativePath('src/script'),
+                    include: relativePath('script'),
                     options: {
                         presets: [['env', {
                             targets: {

@@ -1,0 +1,3 @@
+node_modules
+*.so
+/live-share/resource/static
