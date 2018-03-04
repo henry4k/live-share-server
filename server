@@ -4,7 +4,7 @@
 -- that the package search path is set up correctly, so that Lua is able to
 -- the dependencies.
 
---package.path = '?.lua;'..package.path
---package.cpath = '?.so;'..package.cpath
+package.path = '?.lua;'..package.path
+package.cpath = '?.so;'..package.cpath
 
 dofile'live-share/cli.lua'

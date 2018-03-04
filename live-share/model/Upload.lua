@@ -6,7 +6,7 @@ local User = require'live-share.model.User'
 local Category = require'live-share.model.Category'
 local media_types = require'live-share.media_types'
 local datetime = require'live-share.datetime'
-local config = require'config'
+local config = require'live-share.config'
 
 
 local Upload = class'live-share.model.Upload'

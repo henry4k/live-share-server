@@ -2,7 +2,7 @@ local server = require'live-share.server'
 local handlers = require'live-share.handlers'
 local path = require'path'
 local here = require'live-share.utils'.here
-local config = require'config'
+local config = require'live-share.config'
 
 local static = config.static_content or here('static')
 assert(path.isdir(static), 'Can\'t locate static content directory.')

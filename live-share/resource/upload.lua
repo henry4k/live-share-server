@@ -1,4 +1,4 @@
-local config = require'config'
+local config = require'live-share.config'
 local utils = require'live-share.utils'
 local server = require'live-share.server'
 local handlers = require'live-share.handlers'

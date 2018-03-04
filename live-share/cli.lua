@@ -1,9 +1,12 @@
 -- - create nice stack traces on error
-local function call_main(fn, ...)
+local function call_main(fn, arguments)
     local fat_error = require'fat_error'
     local log = require'live-share.log'
+    local config = require'live-share.config'
 
-    local ok, result_or_err = fat_error.pcall(fn, ...)
+    config.load(arguments.config)
+
+    local ok, result_or_err = fat_error.pcall(fn, arguments)
     if not ok then
         log.fat_error(result_or_err)
         os.exit(1)
@@ -12,11 +15,16 @@ end
 
 local function run(commands)
     local parser = require'argparse'()
-    parser{name = 'live-share-server',
-           description = 'Serves screenshots and screencasts.',
-           epilog = 'For more info, see https://github.com/henry4k/live-share-server'}
-    parser:option('-c --config', 'Configuration file') -- TODO
-    parser:command_target'command'
+        :description'Serves screenshots and screencasts.'
+        :epilog'For more info, see https://github.com/henry4k/live-share-server'
+        :require_command(true)
+        :command_target'command'
+
+    parser:option'-c --config'
+        :description'Configuration file'
+        :args(1)
+        :argname'<file>'
+        :default'config.lua'
 
     for command_name, command in pairs(commands) do
         local subparser = parser:command(command_name, command.description)
@@ -35,6 +43,7 @@ local function call_with_cqueue(fn, ...)
     local cqueues = require'cqueues'
     local auxlib = require'cqueues.auxlib'
 
+    -- luacheck: ignore global coroutine
     coroutine.resume = auxlib.resume
     coroutine.wrap = auxlib.wrap
 

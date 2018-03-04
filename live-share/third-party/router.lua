@@ -1,3 +1,5 @@
+-- Note that this is not the regular version you'd get from LuaRocks, but
+-- a modified one by 3scale: https://github.com/APItools/router.lua
 local router = {
   _VERSION     = 'router.lua v2.1.0',
   _DESCRIPTION = 'A simple router for Lua',

@@ -2,7 +2,7 @@ local cjson = require'cjson'
 local subprocess = require'xcq.subprocess'
 local Promise = require'cqueues.promise'.new
 local utils = require'live-share.utils'
-local config = require'config'
+local thumbnail_config = require'live-share.config'.thumbnail
 
 
 assert(utils.program_is_available('ffmpeg'))
@@ -17,7 +17,7 @@ local function wait_for_process(process)
 end
 
 local function build_postprocessor_args(input, output)
-    local c = config.thumbnail
+    local c = thumbnail_config
     local args = {input_file = input,
                   output_file = output,
                   target_size = c.size,
@@ -40,7 +40,7 @@ local function analyze_and_generate_thumbnail(input, output)
 end
 
 local function build_ffmpeg_args(input, output)
-    local c = config.thumbnail
+    local c = thumbnail_config
     local inspected_frames = c.ffmpeg_inspected_frames or 100
     local extra_args = c.ffmpeg_extra_args or {}
 

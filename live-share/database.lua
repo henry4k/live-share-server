@@ -1,6 +1,6 @@
 local dbi = require'DBI'
 local here = require'live-share.utils'.here
-local config = require'config'
+local config = require'live-share.config'
 
 
 local connection = assert(dbi.Connect('SQLite3', config.database))

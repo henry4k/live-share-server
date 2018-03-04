@@ -41,7 +41,7 @@ gh-pages: doc/lua doc/web
 	tools/update-gh-pages $<
 
 clean:
-	git clean -X
+	git clean -fdX
 
 lint: lint-lua lint-js lint-sh
 
@@ -56,12 +56,6 @@ lint-sh: tools/show-test-coverage tools/update-gh-pages
 
 test:
 	busted '--lua=$(LUA)' $@
-
-bla:
-	echo $(shell find live-share -name '*$(LIB_EXT)')
-
-blubb:
-	find live-share -name '*$(LIB_EXT)'
 
 install:
 	#cp --parents -t $(INSTALL_LIBDIR) $(shell find live-share -name '*$(LIB_EXT)')
