@@ -1,7 +1,7 @@
 local path = require'path'
 local cjson = require'cjson'
-local cqueues = require'cqueues'
 local signal = require'cqueues.signal'
+local log = require'live-share.log'
 
 
 local utils = {}
@@ -91,15 +91,26 @@ function utils.get_temporary_file_name(t)
     return filename
 end
 
-function utils.on_shutdown_signal(callback)
-    local cqueue = assert(cqueues.running())
+local shutdown_callbacks = {}
+local shutdown_listener_installed = false
+
+function utils.install_shutdown_listener(cqueue)
     local signal_set = {signal.SIGTERM, signal.SIGINT}
     local signal_listener = signal.listen(table.unpack(signal_set))
     signal.block(table.unpack(signal_set))
     cqueue:wrap(function()
         signal_listener:wait()
-        callback()
+        log.info('Received shutdown signal')
+        for _, callback in ipairs(shutdown_callbacks) do
+            callback()
+        end
     end)
+    shutdown_listener_installed = true
+end
+
+function utils.on_shutdown_signal(callback)
+    assert(shutdown_listener_installed)
+    table.insert(shutdown_callbacks, callback)
 end
 
 function utils.get_systemd_listen_fds()

@@ -1,10 +1,12 @@
+local cqueues = require'cqueues'
 local cqueues_socket = require'cqueues.socket'
 local http_version = require'http.version'
 local http_server = require'http.server'
 local http_headers = require'http.headers'
 local http_util = require'http.util'
 local fat_error = require'fat_error'
-local is_instance = require'live-share.utils'.is_instance
+local utils = require'live-share.utils'
+local is_instance = utils.is_instance
 local log = require'live-share.log'
 local HttpError = require'live-share.HttpError'
 
@@ -91,6 +93,7 @@ function server.run(t)
     t = t or {}
     t.onstream = onstream
     t.onerror = onerror
+    t.cq = assert(cqueues.running())
 
     local listen_fd = utils.get_systemd_listen_fds()
     if listen_fd then
@@ -106,16 +109,19 @@ function server.run(t)
 
         -- Manually call :listen() so that we are bound before calling :localname()
         assert(server_instance:listen())
+
+        if t.port == 0 then
+            local bound_port = select(3, server_instance:localname())
+            log.info('Now listening on port ', tostring(bound_port))
+        end
     end
 
-    do
-        local bound_port = select(3, server_instance:localname())
-        log.info('Now listening on port ', tostring(bound_port))
-    end
+    utils.on_shutdown_signal(server.stop)
 end
 
 function server.stop()
-    server_instance:stop()
+    server_instance:close()
+    server_instance = nil
 end
 
 return server

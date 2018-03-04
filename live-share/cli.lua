@@ -1,4 +1,5 @@
 -- - create nice stack traces on error
+-- - setup config
 local function call_main(fn, arguments)
     local fat_error = require'fat_error'
     local log = require'live-share.log'
@@ -11,6 +12,24 @@ local function call_main(fn, arguments)
         log.fat_error(result_or_err)
         os.exit(1)
     end
+end
+
+-- - provide a running cqueue
+-- - monkeypatch coroutine module with cqueues wrapper-functions
+-- - setup shutdown listener
+local function call_in_cqueue(fn)
+    local cqueues = require'cqueues'
+    local auxlib = require'cqueues.auxlib'
+    local utils = require'live-share.utils'
+
+    -- luacheck: ignore global coroutine
+    coroutine.resume = auxlib.resume
+    coroutine.wrap = auxlib.wrap
+
+    local cqueue = cqueues.new()
+    utils.install_shutdown_listener(cqueue)
+    cqueue:wrap(fn)
+    assert(cqueue:loop())
 end
 
 local function run(commands)
@@ -34,22 +53,14 @@ local function run(commands)
     end
 
     local arguments = parser:parse()
-    call_main(commands[arguments.command].execute, arguments)
-end
+    local execute = commands[arguments.command].execute
+    if type(execute) == 'string' then
+        execute = require(execute)
+    end
 
--- - provide a running cqueue
--- - monkeypatch coroutine module with cqueues wrapper-functions
-local function call_with_cqueue(fn, ...)
-    local cqueues = require'cqueues'
-    local auxlib = require'cqueues.auxlib'
-
-    -- luacheck: ignore global coroutine
-    coroutine.resume = auxlib.resume
-    coroutine.wrap = auxlib.wrap
-
-    local cqueue = cqueues.new()
-    cqueue:wrap(fn, ...)
-    assert(cqueue:loop())
+    call_in_cqueue(function()
+        call_main(execute, arguments)
+    end)
 end
 
 run{
@@ -59,7 +70,7 @@ run{
         --setup_parser = function(parser)
         --end,
         execute = function(arguments)
-            call_with_cqueue(require'live-share.cli.run', arguments)
+            return require'live-share.cli.run'(arguments)
         end
     }
 }
