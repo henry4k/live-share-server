@@ -120,7 +120,7 @@ function handlers.StaticDir(dir_name)
     return function(p)
         local file_name = assert(p.file, 'Router passes no file parameter.')
         assert(not utils.is_shady_file_name(file_name), 'Shady file name.')
-        local file_name = path.join(dir_name, file_name)
+        file_name = path.join(dir_name, file_name)
         return send_file(p, file_name)
     end
 end

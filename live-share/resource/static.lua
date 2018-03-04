@@ -8,6 +8,12 @@ local static = config.static_content or here('static')
 assert(path.isdir(static), 'Can\'t locate static content directory.')
 
 server.router:get('/', handlers.Redirect{to='/index.html'})
-server.router:get('/index.html', handlers.StaticFile(static..'/index.html'))
-server.router:get('/style.css', handlers.StaticFile(static..'/style.css'))
-server.router:get('/script.js', handlers.StaticFile(static..'/script.js'))
+for _, file in ipairs{'/index.html',
+                      '/style.css',
+                      '/style.css.map',
+                      '/script.js',
+                      '/script.js.map',
+                      '/vendor.js',
+                      '/vendor.js.map'} do
+    server.router:get(file, handlers.StaticFile(static..file))
+end
