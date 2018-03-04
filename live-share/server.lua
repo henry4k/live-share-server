@@ -116,7 +116,7 @@ function server.run(t)
         end
     end
 
-    utils.on_shutdown_signal(server.stop)
+    utils.on_shutdown(server.stop)
 end
 
 function server.stop()

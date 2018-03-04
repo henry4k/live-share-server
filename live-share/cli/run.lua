@@ -1,14 +1,21 @@
-return function(arguments)
-    local database = require'live-share.database'
-    local server = require'live-share.server'
-    local config = require'live-share.config'
+return
+{
+    setup_parser = function(parser)
+        parser:description'Run the web server.'
+    end,
 
-    require'live-share.resource.upload'
-    require'live-share.resource.update'
-    require'live-share.resource.static'
+    run = function(arguments)
+        local database = require'live-share.database'
+        local server = require'live-share.server'
+        local config = require'live-share.config'
 
-    server.run{port = config.port,
-               host = config.host}
+        require'live-share.resource.upload'
+        require'live-share.resource.update'
+        require'live-share.resource.static'
 
-    database.close()
-end
+        server.run{port = config.port,
+                host = config.host}
+
+        database.close()
+    end
+}

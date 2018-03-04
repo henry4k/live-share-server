@@ -1,7 +1,8 @@
 local path = require'path'
 local cjson = require'cjson'
+local cqueues = require'cqueues'
+local promise = require'cqueues.promise'
 local signal = require'cqueues.signal'
-local log = require'live-share.log'
 
 
 local utils = {}
@@ -91,26 +92,31 @@ function utils.get_temporary_file_name(t)
     return filename
 end
 
-local shutdown_callbacks = {}
-local shutdown_listener_installed = false
+utils.shutdown_promise = promise.new()
+
+function utils.shutdown()
+    utils.shutdown_promise:set(true)
+end
+
+function utils.on_shutdown(callback)
+    local cqueue = cqueues.running()
+    cqueue:wrap(function()
+        utils.shutdown_promise:wait()
+        callback()
+    end)
+end
 
 function utils.install_shutdown_listener(cqueue)
     local signal_set = {signal.SIGTERM, signal.SIGINT}
     local signal_listener = signal.listen(table.unpack(signal_set))
     signal.block(table.unpack(signal_set))
     cqueue:wrap(function()
-        signal_listener:wait()
-        log.info('Received shutdown signal')
-        for _, callback in ipairs(shutdown_callbacks) do
-            callback()
+        local ready = assert(cqueues.poll(signal_listener, utils.shutdown_promise))
+        if ready == signal_listener then
+            require'live-share.log'.info('Received shutdown signal')
+            utils.shutdown()
         end
     end)
-    shutdown_listener_installed = true
-end
-
-function utils.on_shutdown_signal(callback)
-    assert(shutdown_listener_installed)
-    table.insert(shutdown_callbacks, callback)
 end
 
 function utils.get_systemd_listen_fds()
