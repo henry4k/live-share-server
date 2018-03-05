@@ -2,6 +2,7 @@ import { Observable } from 'rxjs';
 import { createStore } from './utils';
 import { Upload } from './Upload';
 import { ImageView, VideoView } from './MediaView';
+import { InfiniScroll } from './InfiniScroll';
 
 var uploadViewElement        = null;
 var uploadPlaceholderElement = null;
@@ -119,7 +120,12 @@ function testRx() {
 }
 
 window.addEventListener('load', function(e) {
-    testRx();
+    //testRx();
+    const uploadList = document.getElementById('upload-list-outer');
+    const infiniScroll = new InfiniScroll(uploadList.children[0],
+                                          uploadList.children[1],
+                                          uploadList.children[2]);
+
 /*
     uploadViewElement        = document.getElementById('upload-view');
     uploadPlaceholderElement = document.getElementById('upload-placeholder');

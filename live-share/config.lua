@@ -57,7 +57,7 @@ function config.load(file_name)
             image_type = image_type + defaults_to'jpeg',
             vips_format_options = types.any, -- TODO
             ffmpeg_extra_args = types.array_of(types.string) + defaults_to{}
-        },
+        } + defaults_to{},
         password = types.shape{
             salt_length = types.integer + defaults_to(16),
             argon2_options = types.shape{
@@ -68,8 +68,8 @@ function config.load(file_name)
                 variant = types.one_of{'argon2_i',
                                        'argon2_d',
                                        'argon2_id'}:is_optional()
-            }
-        }
+            } + defaults_to{}
+        } + defaults_to{}
     }
     env = assert(config_shape:transform(env)) -- check and insert default values
 
