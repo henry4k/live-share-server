@@ -35,7 +35,7 @@ class Range {
     }
 }
 
-class LoadingManager {
+class Advisor {
     constructor() {
         this.currentRange = new Range();
     }
@@ -67,8 +67,14 @@ function getVisibleElementHeight(element) {
 }
 
 class Placeholder {
-    constructor(element) {
+    constructor() {
+        const element = document.createElement('div');
+        element.classList.add('placeholder');
         this.element = element;
+    }
+
+    destroy() {
+        this.element.remove();
     }
 
     set size(size) {
@@ -77,20 +83,57 @@ class Placeholder {
 }
 
 export class InfiniScroll {
-    constructor(startPlaceholderElement,
-                entryContainerElement,
-                endPlaceholderElement) {
+    constructor(options) {
+        this.element = options.element;
+        this.entryWidth  = options.entryWidth;
+        this.entryHeight = options.entryWidth;
 
-        this.startPlaceholder = new Placeholder(startPlaceholderElement);
+        this.placeholder = new Placeholder();
+        this.element.appendChild(this.placeholder.element);
         // Occupies the space of unloaded entries.
 
-        this.entryContainerElement = entryContainerElement;
+        this.entryContainer = document.createElement('div');
+        this.entryContainer.classList.add('loaded-entries');
+        this.element.appendChild(this.entryContainer);
         // Contains the loaded entries.
+    }
 
-        this.endPlaceholder = new Placeholder(endPlaceholderElement);
-        // Occupies the space between the last loaded entry and the page bottom.
+    destroy() {
+        this.placeholder.destroy();
+        this.entryContainer.remove();
+    }
 
-        // TEST:
-        this.endPlaceholder.size = 100;
+    appendFront(entries) {
+        const container = this.entryContainer;
+        entries.forEach(entry => {
+            container.insertBefore(entry, container.firstChild);
+        });
+    }
+
+    appendBack(entries) {
+        const container = this.entryContainer;
+        entries.forEach(entry => {
+            container.appendChild(entry);
+        });
+    }
+
+    removeFront(count) {
+        const container = this.entryContainer;
+        if(count > container.childNodes.length) {
+            throw new Error('Container has not this many entries.');
+        }
+        for(let i = 0; i < count; i++) {
+            container.removeChild(container.firstChild);
+        }
+    }
+
+    removeBack(count) {
+        const container = this.entryContainer;
+        if(count > container.childNodes.length) {
+            throw new Error('Container has not this many entries.');
+        }
+        for(let i = 0; i < count; i++) {
+            container.removeChild(container.lastChild);
+        }
     }
 }

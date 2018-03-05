@@ -14,7 +14,7 @@ function relativePath(sub) {
 const nodeLibs = ['rxjs', 'immutable'];
 const outputPath = relativePath('../static');
 const generateSourceMaps = true;
-const minimize = true;
+const minimize = false;
 
 const minimizePlugins = [];
 if(minimize)

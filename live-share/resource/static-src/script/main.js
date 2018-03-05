@@ -86,7 +86,7 @@ function getLatestUploads(count) {
         if(request.responseType !== 'json')
             throw new Error('Invalid response type.');
 
-        request.response.every(uploadProps => {
+        request.response.forEach(uploadProps => {
             const upload = new Upload(uploadProps);
             prependUploadEntry(upload);
         });
@@ -121,10 +121,25 @@ function testRx() {
 
 window.addEventListener('load', function(e) {
     //testRx();
-    const uploadList = document.getElementById('upload-list-outer');
-    const infiniScroll = new InfiniScroll(uploadList.children[0],
-                                          uploadList.children[1],
-                                          uploadList.children[2]);
+
+    const createEntry = function(name) {
+        const imageUrl = 'https://dummyimage.com/160x160&text='+name
+        const categoryEl = document.createElement('span');
+        const authorEl = document.createElement('span');
+        const entry = document.createElement('a');
+        entry.classList.add('upload-entry');
+        entry.appendChild(categoryEl);
+        entry.appendChild(authorEl);
+        entry.style.backgroundImage = "url('"+imageUrl+"')";
+        entry.href = '';
+        return entry;
+    }
+
+    const uploadList = document.getElementById('upload-list');
+    const infiniScroll = new InfiniScroll({element: uploadList,
+                                           entryWidth:  160,
+                                           entryHeight: 160});
+    infiniScroll.appendBack(['first', 'second', 'third'].map(createEntry));
 
 /*
     uploadViewElement        = document.getElementById('upload-view');
@@ -152,7 +167,7 @@ window.addEventListener('load', function(e) {
         beginClearViewedUpload();
         e.preventDefault();
     });
-    uploadViewElement.childNodes.every(childElement => {
+    uploadViewElement.childNodes.forEach(childElement => {
         childElement.addEventListener('click', function(e) {
             e.stopPropagation();
         });

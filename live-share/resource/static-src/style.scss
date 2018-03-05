@@ -116,7 +116,7 @@ $overlay-animation: 0.2s;
     flex-shrink: 0;
 }
 
-#upload-list-outer // contains the infinite scrolling mechanics
+#upload-list // contains the infinite scrolling mechanics
 {
     flex-grow: 0;
     flex-shrink: 0;
@@ -128,14 +128,29 @@ $overlay-animation: 0.2s;
     background-origin: content-box;
 
     padding: $item-size/4;
-}
 
-#upload-list-inner // contains the actual loaded entries
-{
-    display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
-    justify-content: center;
+    .loaded-entries  // contains the actual loaded entries
+    {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    .placeholder
+    {
+        &:first-child
+        {
+            background-color: rgba(0, 0, 255, 0.5);
+        }
+
+        background-color: rgba(255, 0, 255, 0.5);
+
+        &:last-child
+        {
+            background-color: rgba(255, 0, 0, 0.5);
+        }
+    }
 }
 
 $entry-animation: 1s;
@@ -232,19 +247,4 @@ video:focus
     outline: 0;
     outline-style:none;
     outline-width:0;
-}
-
-.placeholder // DEBUG
-{
-    &:first-child
-    {
-        background-color: rgba(0, 0, 255, 0.5);
-    }
-
-    background-color: rgba(255, 0, 255, 0.5);
-
-    &:last-child
-    {
-        background-color: rgba(255, 0, 0, 0.5);
-    }
 }
