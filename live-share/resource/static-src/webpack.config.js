@@ -11,7 +11,13 @@ function relativePath(sub) {
     return path.resolve(__dirname, sub);
 }
 
-const nodeLibs = ['rxjs', 'immutable'];
+const nodeLibs = [
+    'babel-polyfill',
+    'regenerator-runtime',
+    'core-js',
+    'rxjs',
+    'immutable'
+];
 const outputPath = relativePath('../static');
 const generateSourceMaps = true;
 const minimize = false;
@@ -41,6 +47,7 @@ module.exports = function(env) {
             })
         ],
         entry: [
+            'babel-polyfill',
             relativePath('script/main.js'),
             relativePath('index.html'),
             relativePath('style.scss')
@@ -57,11 +64,14 @@ module.exports = function(env) {
                     loader: 'babel-loader',
                     include: relativePath('script'),
                     options: {
-                        presets: [['env', {
-                            targets: {
-                                browsers: ['last 2 versions']
-                            }
-                        }]]
+                        presets: [
+                            ['env', {
+                                targets: {
+                                    browsers: ['last 2 versions']
+                                },
+                                useBuiltIns: 'entry'
+                            }]
+                        ]
                     }
                 },
                 {
