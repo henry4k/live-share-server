@@ -35,10 +35,10 @@ async function requestEntries(referenceEntry,
     const result = [];
     for(let i = 0; i < limit; i++) {
         const entry = new Entry();
-        entry.image = 'https://dummyimage.com/160x160&text='+i;
+        entry.thumbnailImage = 'https://dummyimage.com/160x160&text='+i;
         entry.category = 'category '+i;
         entry.author = 'author '+i;
-        result.push(entry.element);
+        result.push(entry);
     }
     return new Promise(function(resolve, reject) {
         window.setTimeout(function() {
@@ -48,10 +48,10 @@ async function requestEntries(referenceEntry,
 } // returns List<Element>
 
 function createEntryPlaceholderElement() {
-    const entry = document.createElement('a');
-    entry.classList.add('upload-entry');
-    entry.href = '';
-    return entry;
+    const element = document.createElement('a');
+    element.classList.add('upload-entry');
+    element.href = '';
+    return element;
 }
 
 export function test() {
@@ -60,7 +60,7 @@ export function test() {
         element: uploadList,
         scrollElement: document.documentElement,
         scrollEventSource: window,
-        requestEntryElements: requestEntries,
+        requestEntries: requestEntries,
         createEntryPlaceholderElement: createEntryPlaceholderElement
     });
 }

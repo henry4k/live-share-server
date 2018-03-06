@@ -13,7 +13,7 @@ function getVisibleElementHeight(element) {
 export class InfiniScroll {
     constructor(options) {
         this.element = options.element;
-        this.requestEntryElements = options.requestEntryElements;
+        this.requestEntries = options.requestEntries;
         this.createEntryPlaceholderElement = options.createEntryPlaceholderElement;
         this.scrollElement = options.scrollElement || this.element;
         this.scrollEventSource = options.scrollEventSource || this.scrollElement;
@@ -34,7 +34,7 @@ export class InfiniScroll {
                 timeoutId = window.setTimeout(function() {
                     timeoutId = null;
                     this.update();
-                }.bind(this), 1000);
+                }.bind(this), 400);
             }
         }.bind(this);
         this.scrollEventSource.addEventListener('scroll', this.scrollEventCallback);
@@ -48,7 +48,7 @@ export class InfiniScroll {
         this.entryContainer.remove();
     }
 
-    update() {
+    async update() {
         // TODO: Distance from .element to .scrollElement?
         console.log('update');
 
@@ -61,15 +61,22 @@ export class InfiniScroll {
 
         console.log(`top: ${distanceToTop}  bottom: ${distanceToBottom}`);
 
-        if(distanceToTop <= 0) { // TODO: Make configuratable
-            const count = 10;
+        if(distanceToBottom <= 500) { // TODO: Make configuratable
+            const count = 20;
             const placeholders = [];
             for(let i = 0; i < count; i++) {
                 placeholders.push(this.createEntryPlaceholderElement());
             }
-            this.appendFront(placeholders);
+            this.appendBack(placeholders);
+
+            const entries = await this.requestEntries(undefined, false, count, 0);
+            for(let i = 0; i < count; i++) {
+                this.entryContainer.replaceChild(entries[i].element,
+                                                 placeholders[i]);
+            }
         }
 
+        /*
         if(distanceToBottom <= 0) { // TODO: Make configuratable
             const count = 10;
             const placeholders = [];
@@ -78,6 +85,7 @@ export class InfiniScroll {
             }
             this.appendBack(placeholders);
         }
+        */
     }
 
     setVerticalPlaceholderSize(size) {
