@@ -2,7 +2,7 @@ import { Observable } from 'rxjs';
 import { createStore } from './utils';
 import { Upload } from './Upload';
 import { ImageView, VideoView } from './MediaView';
-import { InfiniScroll } from './InfiniScroll';
+import { test } from './test';
 
 var uploadViewElement        = null;
 var uploadPlaceholderElement = null;
@@ -121,25 +121,7 @@ function testRx() {
 
 window.addEventListener('load', function(e) {
     //testRx();
-
-    const createEntry = function(name) {
-        const imageUrl = 'https://dummyimage.com/160x160&text='+name
-        const categoryEl = document.createElement('span');
-        const authorEl = document.createElement('span');
-        const entry = document.createElement('a');
-        entry.classList.add('upload-entry');
-        entry.appendChild(categoryEl);
-        entry.appendChild(authorEl);
-        entry.style.backgroundImage = "url('"+imageUrl+"')";
-        entry.href = '';
-        return entry;
-    }
-
-    const uploadList = document.getElementById('upload-list');
-    const infiniScroll = new InfiniScroll({element: uploadList,
-                                           entryWidth:  160,
-                                           entryHeight: 160});
-    infiniScroll.appendBack(['first', 'second', 'third'].map(createEntry));
+    test();
 
 /*
     uploadViewElement        = document.getElementById('upload-view');

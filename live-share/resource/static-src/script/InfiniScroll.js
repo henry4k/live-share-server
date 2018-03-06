@@ -1,63 +1,5 @@
 // TODO: Filename is temporary.
 
-class Range {
-    constructor(start, end) {
-        this.start = start;
-        this.end   = end;
-    }
-
-    get length() {
-        return this.end - this.start;
-    }
-
-    contains(other) {
-        return this.start <= other.start &&
-               this.end   >= other.end;
-    }
-
-    distanceTo(other) {
-        return Math.max(this.start  - other.end,
-                        other.start - this.end);
-    }
-
-    overlaps(other) {
-        return this.distanceTo(other) < 0;
-    }
-
-    unionWith(other) {
-        return new Range(Math.min(this.start, other.start),
-                         Math.max(this.end,   other.end));
-    }
-
-    intersectionWith(other) {
-        return new Range(Math.max(this.start, other.start),
-                         Math.min(this.end,   other.end));
-    }
-}
-
-class Advisor {
-    constructor() {
-        this.currentRange = new Range();
-    }
-
-    update(visibleRangeStart, visibleRangeEnd) {
-        const visibleRange = new Range(visibleRangeStart,
-                                       visibleRangeEnd);
-
-        const requestedRange = visibleRange;
-        // TODO: Think of a more elaborated algorithm.
-
-        const result = {start: requestedRange.start - this.currentRange.start,
-                        end:   requestedRange.end   - this.currentRange.end};
-        // Positive values mean: Load n entries.
-        // Negative values mean: Unload n entries.
-
-        this.currentRange = requestedRange;
-
-        return result;
-    }
-}
-
 function getVisibleElementHeight(element) {
     const rect = element.getBoundingClientRect();
     const visibleTop = Math.max(rect.top, 0);
@@ -66,41 +8,80 @@ function getVisibleElementHeight(element) {
     return Math.max(0, visibleBottom-visibleTop);
 }
 
-class Placeholder {
-    constructor() {
-        const element = document.createElement('div');
-        element.classList.add('placeholder');
-        this.element = element;
-    }
-
-    destroy() {
-        this.element.remove();
-    }
-
-    set size(size) {
-        this.element.style.height = `${size}px`;
-    }
-}
+// ............
 
 export class InfiniScroll {
     constructor(options) {
         this.element = options.element;
-        this.entryWidth  = options.entryWidth;
-        this.entryHeight = options.entryWidth;
+        this.requestEntryElements = options.requestEntryElements;
+        this.createEntryPlaceholderElement = options.createEntryPlaceholderElement;
+        this.scrollElement = options.scrollElement || this.element;
+        this.scrollEventSource = options.scrollEventSource || this.scrollElement;
 
-        this.placeholder = new Placeholder();
-        this.element.appendChild(this.placeholder.element);
+        this.verticalPlaceholder = document.createElement('div');
+        this.verticalPlaceholder.classList.add('placeholder');
+        this.element.appendChild(this.verticalPlaceholder);
         // Occupies the space of unloaded entries.
 
         this.entryContainer = document.createElement('div');
         this.entryContainer.classList.add('loaded-entries');
         this.element.appendChild(this.entryContainer);
         // Contains the loaded entries.
+
+        let timeoutId = null;
+        this.scrollEventCallback = function() {
+            if(!timeoutId) {
+                timeoutId = window.setTimeout(function() {
+                    timeoutId = null;
+                    this.update();
+                }.bind(this), 1000);
+            }
+        }.bind(this);
+        this.scrollEventSource.addEventListener('scroll', this.scrollEventCallback);
+
+        this.update();
     }
 
     destroy() {
-        this.placeholder.destroy();
+        this.scrollEventSource.removeEventListener(this.scrollEventCallback);
+        this.verticalPlaceholder.remove();
         this.entryContainer.remove();
+    }
+
+    update() {
+        // TODO: Distance from .element to .scrollElement?
+        console.log('update');
+
+        const scrollTop = this.scrollElement.scrollTop;
+        const scrollBottom = scrollTop + this.scrollElement.clientHeight;
+        const scrollHeight = this.scrollElement.scrollHeight;
+
+        const distanceToTop = scrollTop;
+        const distanceToBottom = scrollHeight - scrollBottom;
+
+        console.log(`top: ${distanceToTop}  bottom: ${distanceToBottom}`);
+
+        if(distanceToTop <= 0) { // TODO: Make configuratable
+            const count = 10;
+            const placeholders = [];
+            for(let i = 0; i < count; i++) {
+                placeholders.push(this.createEntryPlaceholderElement());
+            }
+            this.appendFront(placeholders);
+        }
+
+        if(distanceToBottom <= 0) { // TODO: Make configuratable
+            const count = 10;
+            const placeholders = [];
+            for(let i = 0; i < count; i++) {
+                placeholders.push(this.createEntryPlaceholderElement());
+            }
+            this.appendBack(placeholders);
+        }
+    }
+
+    setVerticalPlaceholderSize(size) {
+        this.verticalPlaceholder.style.height = `${size}px`;
     }
 
     appendFront(entries) {
