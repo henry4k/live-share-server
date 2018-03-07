@@ -4,29 +4,41 @@
 #LUALIB =
 #LUA_INCDIR =
 #LUA_LIBDIR =
-#VIPS_INCDIR =
-#VIPS_LIBDIR =
+
+ifdef PKGCONFIG_BINDIR
+PKGCONFIG = $(PKGCONFIG_BINDIR)/pkg-config
+else
+PKGCONFIG = pkg-config
+endif
+
+VIPS_CFLAGS  = `$(PKGCONFIG) --cflags vips`
+VIPS_LDFLAGS = `$(PKGCONFIG) --libs   vips`
+
 LIB_EXT = .so
+
+# Reserved for internal use:
+_CFLAGS =
+_LDFLAGS =
+
 
 .PHONY: build clean lint lint-lua lint-js lint-sh test install gh-pages
 
-build: .gitignore doc live-share/resource/static #live-share/image_processor$(LIB_EXT)
+build: .gitignore doc live-share/resource/static live-share/image_processor$(LIB_EXT)
 
 live-share/resource/static: live-share/resource/static-src
 	cd $< && npm install
 	mkdir -p $@
 	cd $< && npm run build
 
-%$(LIB_EXT): CFLAGS += -I$(LUA_INCDIR)
-%$(LIB_EXT): LDFLAGS += -L$(LUA_LIBDIR)
+%$(LIB_EXT): _CFLAGS += -I$(LUA_INCDIR)
+%$(LIB_EXT): _LDFLAGS += -L$(LUA_LIBDIR)
 ifdef LUALIB
-%$(LIB_EXT): LDFLAGS += -l$(LUALIB)
+%$(LIB_EXT): _LDFLAGS += -l$(LUALIB)
 endif
+live-share/image_processor$(LIB_EXT): _CFLAGS += $(VIPS_CFLAGS)
+live-share/image_processor$(LIB_EXT): _LDFLAGS += $(VIPS_LDFLAGS)
 %$(LIB_EXT): %.c
-	$(CC) $(CFLAGS) $(LDFLAGS) $(LIBFLAG) -o $@ $^
-
-live-share/image_processor$(LIB_EXT): CFLAGS += -I$(VIPS_INCDIR)
-live-share/image_processor$(LIB_EXT): LDFLAGS += -L$(VIPS_LIBDIR) -lvips
+	$(CC) $(_CFLAGS) $(CFLAGS) $(_LDFLAGS) $(LIBFLAG) $(LDFLAGS) -o $@ $^
 
 doc:
 	mkdir $@
@@ -58,7 +70,7 @@ test:
 	busted '--lua=$(LUA)' $@
 
 install:
-	#cp --parents -t $(INSTALL_LIBDIR) $(shell find live-share -name '*$(LIB_EXT)')
+	cp --parents -t $(INSTALL_LIBDIR) $(shell find live-share -name '*$(LIB_EXT)')
 	cp --parents -t $(INSTALL_LUADIR) $(shell find live-share -name '*.lua')
 	cp --parents -t $(INSTALL_LUADIR) live-share/schema.sql
 	cp --parents -r -t $(INSTALL_LUADIR) live-share/resource/static

@@ -32,9 +32,8 @@ supported_platforms = {
     '!windows'
 }
 external_dependencies = {
-    VIPS = {
-        header = 'vips/vips.h',
-        library = 'vips'
+    PKGCONFIG = {
+        program = 'pkg-config'
     }
 }
 build = {
@@ -46,27 +45,11 @@ build = {
         LUALIB = '$(LUALIB)',
         LUA_INCDIR = '$(LUA_INCDIR)',
         LUA_LIBDIR = '$(LUA_LIBDIR)',
-        VIPS_INCDIR = '$(VIPS_INCDIR)',
-        VIPS_LIBDIR = '$(VIPS_LIBDIR)',
+        PKGCONFIG_BINDIR = '$(PKGCONFIG_BINDIR)'
     },
     install_variables = {
         INSTALL_BINDIR="$(BINDIR)",
         INSTALL_LIBDIR="$(LIBDIR)",
         INSTALL_LUADIR="$(LUADIR)"
-    },
-    --variables
-    --predefined make variables: CC, CFLAGS, LIBFLAGS
-    --install = {
-    --    lua = {
-    --        ['live-share.EventStream'] = 'src/lua/live-share/EventStream.lua',
-    --        ['live-share.Index'] = 'src/web/dist/index.html',
-    --        ['live-share.Script'] = 'src/web/dist/script.js'
-    --    },
-    --    bin = {
-    --        ['live-share-server'] = 'src/lua/live-share/cli.lua'
-    --    }
-    --},
-    copy_directories = {
-        'doc'
     }
 }
