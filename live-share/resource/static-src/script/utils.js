@@ -7,3 +7,10 @@ export function createStore(initialState) {
         .scan((state, changeFn) => fromJS(changeFn(state)),
               fromJS(initialState));
 }
+
+export function assert(v, msg) {
+    if(v)
+        return v;
+    else
+        throw new Error(msg || 'assertion failed');
+}

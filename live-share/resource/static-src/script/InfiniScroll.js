@@ -1,32 +1,137 @@
 // TODO: Filename is temporary.
+import { assert } from './utils';
 
-function getVisibleElementHeight(element) {
-    const rect = element.getBoundingClientRect();
-    const visibleTop = Math.max(rect.top, 0);
-    const rectBottom = rect.top + rect.height;
-    const visibleBottom = Math.min(rectBottom, window.innerHeight);
-    return Math.max(0, visibleBottom-visibleTop);
+class EntryStreamSide {
+    /**
+     * @param {Object} o Options
+     * @param {Function} o.requestEntries
+     * Expects a function taking (referenceEntry, count) and returning a
+     * promise for entries.
+     * @param {Function} o.createPlaceholder
+     * @param {Function} o.replacePlaceholder
+     * @param {Function} o.pushElement
+     * @param {Function} o.removeElement
+     */
+    constructor(o) {
+        this._requestEntries    = assert(o.requestEntries);
+        this.createPlaceholder  = assert(o.createPlaceholder);
+        this.replacePlaceholder = assert(o.replacePlaceholder);
+        this.pushElement        = assert(o.pushElement);
+        this.removeElement      = assert(o.removeElement);
+
+        this.ended = false; // no more entries available
+        this.firstEntry = null;
+        this.requestRunning = false;
+        this.placeholders = [];
+    }
+
+    get requestedEntryCount() {
+        return this.placeholders.length;
+    }
+
+    set requestedEntryCount(count) {
+        const placeholders = this.placeholders;
+        const diff = count - placeholders.length;
+        if(diff > 0)
+            for(let i = 0; i < diff; i++) {
+                const p = this.createPlaceholder();
+                this.pushElement(p);
+                placeholders.push(p);
+            }
+        else
+            for(let i = 0; i < diff; i++)
+                this.removeElement(placeholders.pop());
+        assert(placeholders.length === count);
+    }
+
+    insertEntry(entry) {
+        const placeholder = this.placeholders.shift();
+        this.replacePlaceholder(placeholder, entry);
+        this.firstEntry = entry;
+    }
+
+    end() {
+        this.ended = true;
+        this.requestedEntryCount = 0;
+    }
+
+    async requestEntries(count) {
+        if(this.ended)
+            return;
+
+        this.requestedEntryCount += count;
+
+        if(this.requestRunning)
+            return;
+
+        this.requestRunning = true;
+        try {
+            const requestedEntryCount = this.requestedEntryCount;
+            const entries =
+                await this._requestEntries(this.firstEntry, requestedEntryCount);
+            entries.forEach(this.insertEntry.bind(this));
+            if(entries.length < requestedEntryCount)
+                end();
+        } finally {
+            this.requestRunning = false;
+        }
+    }
 }
 
-// ............
-
+/**
+ * @param {Object} o Options
+ * @param {Element} o.element
+ * @param {Function} o.requestEntries
+ * Expects a function taking (referenceEntry, direction, count) and returning
+ * a promise for entries.
+ * @param {Function} o.createEntryPlaceholderElement
+ * @param {Function} o.replacePlaceholder
+ * Expects a function taking (placeholder, entry).
+ * @param {Element} [o.scrollElement]
+ * @param {EventSource} [o.scrollEventSource]
+ */
 export class InfiniScroll {
-    constructor(options) {
-        this.element = options.element;
-        this.requestEntries = options.requestEntries;
-        this.createEntryPlaceholderElement = options.createEntryPlaceholderElement;
-        this.scrollElement = options.scrollElement || this.element;
-        this.scrollEventSource = options.scrollEventSource || this.scrollElement;
-
-        this.verticalPlaceholder = document.createElement('div');
-        this.verticalPlaceholder.classList.add('placeholder');
-        this.element.appendChild(this.verticalPlaceholder);
-        // Occupies the space of unloaded entries.
+    constructor(o) {
+        this.element           = assert(o.element);
+        this.scrollElement     = assert(o.scrollElement     || this.element);
+        this.scrollEventSource = assert(o.scrollEventSource || this.scrollElement);
+        assert(o.requestEntries);
+        assert(o.createEntryPlaceholderElement);
+        assert(o.replacePlaceholder);
 
         this.entryContainer = document.createElement('div');
         this.entryContainer.classList.add('loaded-entries');
         this.element.appendChild(this.entryContainer);
         // Contains the loaded entries.
+
+        const requestEntries = o.requestEntries;
+        const removeElement = function(element) {
+            this.entryContainer.removeChild(element);
+        }.bind(this);
+
+        this.frontEntryStream = new EntryStreamSide({
+            requestEntries: function(referenceEntry, count) {
+                return requestEntries(referenceEntry, 'before', count);
+            },
+            createPlaceholder: o.createEntryPlaceholderElement,
+            replacePlaceholder: o.replacePlaceholder,
+            pushElement: function(element) {
+                const container = this.entryContainer;
+                container.insertBefore(element, container.firstChild);
+            }.bind(this),
+            removeElement: removeElement
+        });
+        this.backEntryStream = new EntryStreamSide({
+            requestEntries: function(referenceEntry, count) {
+                return requestEntries(referenceEntry, 'after', count);
+            },
+            createPlaceholder: o.createEntryPlaceholderElement,
+            replacePlaceholder: o.replacePlaceholder,
+            pushElement: function(element) {
+                this.entryContainer.appendChild(element);
+            }.bind(this),
+            removeElement: removeElement
+        });
 
         let timeoutId = null;
         this.scrollEventCallback = function() {
@@ -44,13 +149,11 @@ export class InfiniScroll {
 
     destroy() {
         this.scrollEventSource.removeEventListener(this.scrollEventCallback);
-        this.verticalPlaceholder.remove();
         this.entryContainer.remove();
     }
 
     async update() {
         // TODO: Distance from .element to .scrollElement?
-        console.log('update');
 
         const scrollTop = this.scrollElement.scrollTop;
         const scrollBottom = scrollTop + this.scrollElement.clientHeight;
@@ -59,70 +162,9 @@ export class InfiniScroll {
         const distanceToTop = scrollTop;
         const distanceToBottom = scrollHeight - scrollBottom;
 
-        console.log(`top: ${distanceToTop}  bottom: ${distanceToBottom}`);
-
-        if(distanceToBottom <= 500) { // TODO: Make configuratable
-            const count = 20;
-            const placeholders = [];
-            for(let i = 0; i < count; i++) {
-                placeholders.push(this.createEntryPlaceholderElement());
-            }
-            this.appendBack(placeholders);
-
-            const entries = await this.requestEntries(undefined, false, count, 0);
-            for(let i = 0; i < count; i++) {
-                this.entryContainer.replaceChild(entries[i].element,
-                                                 placeholders[i]);
-            }
-        }
-
-        /*
-        if(distanceToBottom <= 0) { // TODO: Make configuratable
-            const count = 10;
-            const placeholders = [];
-            for(let i = 0; i < count; i++) {
-                placeholders.push(this.createEntryPlaceholderElement());
-            }
-            this.appendBack(placeholders);
-        }
-        */
-    }
-
-    setVerticalPlaceholderSize(size) {
-        this.verticalPlaceholder.style.height = `${size}px`;
-    }
-
-    appendFront(entries) {
-        const container = this.entryContainer;
-        entries.forEach(entry => {
-            container.insertBefore(entry, container.firstChild);
-        });
-    }
-
-    appendBack(entries) {
-        const container = this.entryContainer;
-        entries.forEach(entry => {
-            container.appendChild(entry);
-        });
-    }
-
-    removeFront(count) {
-        const container = this.entryContainer;
-        if(count > container.childNodes.length) {
-            throw new Error('Container has not this many entries.');
-        }
-        for(let i = 0; i < count; i++) {
-            container.removeChild(container.firstChild);
-        }
-    }
-
-    removeBack(count) {
-        const container = this.entryContainer;
-        if(count > container.childNodes.length) {
-            throw new Error('Container has not this many entries.');
-        }
-        for(let i = 0; i < count; i++) {
-            container.removeChild(container.lastChild);
-        }
+        if(distanceToTop <= 500) // TODO: Make configuratable
+            this.frontEntryStream.requestEntries(10);
+        if(distanceToBottom <= 500) // TODO: Make configuratable
+            this.backEntryStream.requestEntries(10);
     }
 }

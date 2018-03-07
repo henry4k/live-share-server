@@ -28,16 +28,25 @@ class Entry {
     }
 }
 
+let beforeCounter = 1;
+let afterCounter  = 1;
+
 async function requestEntries(referenceEntry,
-                              before, // else: after
-                              limit,
-                              offset) {
+                              direction,
+                              count) {
     const result = [];
-    for(let i = 0; i < limit; i++) {
+    for(let i = 0; i < count; i++) {
+        let id;
+        if(direction === 'before') {
+            id = -(beforeCounter++);
+        } else {
+            id = afterCounter++;
+        }
+
         const entry = new Entry();
-        entry.thumbnailImage = 'https://dummyimage.com/160x160&text='+i;
-        entry.category = 'category '+i;
-        entry.author = 'author '+i;
+        entry.thumbnailImage = 'https://dummyimage.com/160x160&text='+id;
+        entry.category = direction;
+        entry.author = ''+(i+1)+'. in batch';
         result.push(entry);
     }
     return new Promise(function(resolve, reject) {
@@ -54,6 +63,12 @@ function createEntryPlaceholderElement() {
     return element;
 }
 
+function replacePlaceholder(placeholder, entry) {
+    // Ghetto implementation:
+    const parent = placeholder.parentElement;
+    parent.replaceChild(entry.element, placeholder);
+}
+
 export function test() {
     const uploadList = document.getElementById('upload-list');
     const infiniScroll = new InfiniScroll({
@@ -61,6 +76,7 @@ export function test() {
         scrollElement: document.documentElement,
         scrollEventSource: window,
         requestEntries: requestEntries,
-        createEntryPlaceholderElement: createEntryPlaceholderElement
+        createEntryPlaceholderElement: createEntryPlaceholderElement,
+        replacePlaceholder: replacePlaceholder
     });
 }
