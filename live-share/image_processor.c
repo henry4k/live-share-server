@@ -52,8 +52,72 @@ static int lua_vips_version_string(lua_State* l)
     return 1;
 }
 
+static int check_vips_access_from_lua(lua_State* l, int arg)
+{
+    static const char* options =
+    {
+        "random",
+        "sequential",
+        "sequential_unbuffered"
+    };
+    return luaL_checkoption(l, arg, NULL, options);
+}
+
+static VipsImage* check_vips_image_from_lua(lua_State* l, int arg)
+{
+    //return (VipsImage*)luaL_checkudata(l, arg, "VipsImage");
+
+    if(!lua_islightuserdata(l, arg))
+    {
+        luaL_error("invalid parameter type");
+        return NULL;
+    }
+    return (VipsImage*)lua_touserdata(l, arg);
+}
+
+static int lua_vips_image_unref(lua_State* l)
+{
+    g_object_unref(check_vips_image_from_lua(l, 1));
+    return 0;
+}
+
+static int lua_vips_image_new_from_file(lua_State* l)
+{
+    const char* name = luaL_checkstring(l, 1);
+    VipsImage* image = vips_image_new_from_file(name);
+    lua_pushlightuserdata(l, image);
+    return 1;
+}
+
+static int lua_vips_image_write_to_file(lua_State* l)
+{
+    VipsImage* image = check_vips_image_from_lua(l, 1);
+    const char* name = luaL_checkstring(l, 2);
+    vips_image_write_to_file(image, name);
+    return 0;
+}
+
+static int lua_vips_image_get_properties(lua_State* l)
+{
+    // check_vips_image_from_lua()
+
+    //lua_createtable(l, 0, );
+    // ...
+    return 1;
+}
+
 EXPORT int luaopen_share_image_processor(lua_State* l)
 {
+    //luaL_newmetatable(l, "VipsImage");
+    //lua_pushcfunction(l, __gc_callback__);
+    //lua_setfield(l, -2, "__gc");
+    //lua_pop(l, 1); // pop metatable
+
+    //void* data = lua_newuserdata(l, __size__);
+    //luaL_getmetatable(l, "VipsImage");
+    //assert(lua_istable(l, -1));
+    //lua_setmetatable(l, -2);
+
     const luaL_Reg reg[] =
     {
         {"init", lua_vips_init},
