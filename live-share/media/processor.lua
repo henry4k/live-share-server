@@ -1,13 +1,12 @@
-local cjson = require'cjson'
 local subprocess = require'xcq.subprocess'
 local Promise = require'cqueues.promise'.new
 local utils = require'live-share.utils'
+local image_processor = require'live-share.media.image_processor'
 local thumbnail_config = require'live-share.config'.thumbnail
 
 
+assert(image_processor.init(arg[0]))
 assert(utils.program_is_available('ffmpeg'))
-
-local thumbnail = {}
 
 local function wait_for_process(process)
     local code, status = process:wait()
@@ -16,33 +15,39 @@ local function wait_for_process(process)
     end
 end
 
-local function build_postprocessor_args(input, output)
-    local c = thumbnail_config
-    local args = {input_file = input,
-                  output_file = output,
-                  target_size = c.size,
-                  format_options = c.vips_format_options}
-    local arg_string = cjson.encode(args)
-    return {'./postprocess-image', arg_string}
+local function vips_options_from_table(options)
+    if not options or not next(options) then
+        return ''
+    end
+    local buffer = {}
+    for name, value in pairs(options) do
+        if type(value) == 'boolean' then
+            if value then
+                table.insert(buffer, name)
+            end
+        else
+            table.insert(name..'='..tostring(value))
+        end
+    end
+    return '['..table.concat(buffer,',')..']'
 end
+local load_options = vips_options_from_table(thumbnail_config.vips.load_options)
+local save_options = vips_options_from_table(thumbnail_config.vips.save_options)
 
 -- returns image metadata as table
 local function analyze_and_generate_thumbnail(input, output)
-    local args = build_postprocessor_args(input, output)
-    args.stdout = subprocess.PIPE
-    local process = assert(subprocess.spawn(args))
-
-    local metadata_string = process.stdout:read('*a')
-    local metadata = assert(cjson.decode(metadata_string))
-
-    wait_for_process(process)
+    local size = thumbnail_config.size
+    input = input..load_options
+    output = output..save_options
+    local metadata = assert(image_processor.process(input, output, size))
+    -- TODO: Move into a thread or so.
     return metadata
 end
 
 local function build_ffmpeg_args(input, output)
     local c = thumbnail_config
-    local inspected_frames = c.ffmpeg_inspected_frames or 100
-    local extra_args = c.ffmpeg_extra_args or {}
+    local inspected_frames = c.ffmpeg_inspected_frames
+    local extra_args = c.ffmpeg_extra_args
 
     local f = string.format
     local filter = {f('thumbnail=%d',
@@ -68,7 +73,9 @@ local function extract_image_from_video(input, output)
     wait_for_process(process)
 end
 
-function thumbnail.generate(media_type, file, thumbnail_file)
+local media_processor = {}
+
+function media_processor.process(media_type, file, thumbnail_file)
     if media_type.type == 'image' then
         return Promise(function()
             return analyze_and_generate_thumbnail(file,
@@ -89,4 +96,4 @@ function thumbnail.generate(media_type, file, thumbnail_file)
     end
 end
 
-return thumbnail
+return media_processor

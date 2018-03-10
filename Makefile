@@ -23,7 +23,7 @@ _LDFLAGS =
 
 .PHONY: build clean lint lint-lua lint-js lint-sh test install gh-pages
 
-build: .gitignore doc live-share/resource/static live-share/image_processor$(LIB_EXT)
+build: .gitignore doc live-share/resource/static live-share/media/image_processor$(LIB_EXT)
 
 live-share/resource/static: live-share/resource/static-src
 	cd $< && npm install
@@ -35,8 +35,8 @@ live-share/resource/static: live-share/resource/static-src
 ifdef LUALIB
 %$(LIB_EXT): _LDFLAGS += -l$(LUALIB)
 endif
-live-share/image_processor$(LIB_EXT): _CFLAGS += $(VIPS_CFLAGS)
-live-share/image_processor$(LIB_EXT): _LDFLAGS += $(VIPS_LDFLAGS)
+live-share/media/image_processor$(LIB_EXT): _CFLAGS += $(VIPS_CFLAGS)
+live-share/media/image_processor$(LIB_EXT): _LDFLAGS += $(VIPS_LDFLAGS)
 %$(LIB_EXT): %.c
 	$(CC) $(_CFLAGS) $(CFLAGS) $(_LDFLAGS) $(LIBFLAG) $(LDFLAGS) -o $@ $^
 

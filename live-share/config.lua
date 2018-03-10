@@ -1,6 +1,6 @@
 local path = require 'path'
 local types = require'tableshape'.types
-local media_types = require'live-share.media_types'
+local media_types = require'live-share.media.types'
 
 local directory_type = types.custom(function(value)
     if type(value) ~= 'string' then
@@ -55,7 +55,11 @@ function config.load(file_name)
             directory = directory_type,
             size = types.integer + defaults_to(160),
             image_type = image_type + defaults_to'jpeg',
-            vips_format_options = types.any, -- TODO
+            vips = types.shape{
+                load_options = types.any,
+                save_options = types.any
+            } + defaults_to{},
+            ffmpeg_inspected_frames = types.integer + defaults_to(100),
             ffmpeg_extra_args = types.array_of(types.string) + defaults_to{}
         } + defaults_to{},
         password = types.shape{

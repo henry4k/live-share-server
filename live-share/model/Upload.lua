@@ -4,7 +4,7 @@ local log = require'live-share.log'
 local MappedEntity = require'live-share.MappedEntity'
 local User = require'live-share.model.User'
 local Category = require'live-share.model.Category'
-local media_types = require'live-share.media_types'
+local media_types = require'live-share.media.types'
 local datetime = require'live-share.datetime'
 local config = require'live-share.config'
 

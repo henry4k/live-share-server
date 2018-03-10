@@ -3,12 +3,12 @@ local utils = require'live-share.utils'
 local server = require'live-share.server'
 local handlers = require'live-share.handlers'
 local database = require'live-share.database'
-local media_types = require'live-share.media_types'
+local media_types = require'live-share.media.types'
+local media_processor = require'live-share.media.processor'
 local update_resource = require'live-share.resource.update'
 local User = require'live-share.model.User'
 local Category = require'live-share.model.Category'
 local Upload = require'live-share.model.Upload'
-local thumbnail = require'live-share.thumbnail'
 local datetime = require'live-share.datetime'
 local HttpError = require'live-share.HttpError'
 
@@ -60,9 +60,9 @@ server.router:post('/upload', function(p)
     p.stream:save_body_to_file(temp_upload_file)
     temp_upload_file:close()
 
-    local metadata = thumbnail.generate(upload.media_type,
-                                        temp_upload_file_name,
-                                        temp_thumbnail_file_name):get()
+    local metadata = media_processor.process(upload.media_type,
+                                             temp_upload_file_name,
+                                             temp_thumbnail_file_name):get()
     upload.width  = assert(metadata.width)
     upload.height = assert(metadata.height)
 
