@@ -1,5 +1,6 @@
 local dbi = require'DBI'
 local here = require'live-share.utils'.here
+local utils = require'live-share.utils'
 local config = require'live-share.config'
 
 
@@ -15,6 +16,7 @@ function database.close()
         ps:close()
     end
     connection:close()
+    connection = nil
 end
 
 local function prepare(statement)
@@ -75,5 +77,6 @@ end
 
 database.exec_file(here('schema.sql'))
 database.commit()
+utils.on_shutdown(database.close)
 
 return database

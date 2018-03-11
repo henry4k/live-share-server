@@ -14,8 +14,6 @@ return
         require'live-share.resource.static'
 
         server.run{port = config.port,
-                host = config.host}
-
-        database.close()
+                   host = config.host}
     end
 }

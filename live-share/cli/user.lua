@@ -60,7 +60,6 @@ return
                 user:create_entity()
                 database.commit()
 
-                database.close()
                 require'live-share.utils'.shutdown()
             end
         }
