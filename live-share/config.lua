@@ -2,29 +2,33 @@ local path = require 'path'
 local types = require'tableshape'.types
 local media_types = require'live-share.media.types'
 
-local directory_type = types.custom(function(value)
-    if type(value) ~= 'string' then
-        return nil, 'expected string'
-    end
+local function directory_type()
+    return types.custom(function(value, self)
+        if type(value) ~= 'string' then
+            return nil, 'expected string'
+        end
 
-    if path.isdir(value) then
-        return nil, 'not a directory'
-    end
+        if not path.isdir(value) then
+            return nil, 'not a directory'
+        end
 
-    return true
-end)
+        return true
+    end)
+end
 
-local image_type = types.custom(function(value)
-    if type(value) ~= 'string' then
-        return nil, 'expected string'
-    end
+local function image_type()
+    return types.custom(function(value)
+        if type(value) ~= 'string' then
+            return nil, 'expected string'
+        end
 
-    if not media_types.by_mime_type['image/'..value] then
-        return nil, 'invalid/unknown image type'
-    end
+        if not media_types.by_mime_type['image/'..value] then
+            return nil, 'invalid/unknown image type'
+        end
 
-    return true
-end)
+        return true
+    end)
+end
 
 local function defaults_to(value)
     return types.any/value
@@ -48,13 +52,13 @@ function config.load(file_name)
     local config_shape = types.shape{
         host = types.string + defaults_to'0.0.0.0',
         port = types.integer,
-        static_content = directory_type:is_optional(),
-        upload_directory = directory_type,
+        static_content = directory_type():is_optional(),
+        upload_directory = directory_type(),
         database = types.string,
         thumbnail = types.shape{
-            directory = directory_type,
+            directory = directory_type(),
             size = types.integer + defaults_to(160),
-            image_type = image_type + defaults_to'jpeg',
+            image_type = image_type() + defaults_to'jpeg',
             vips = types.shape{
                 load_options = types.any,
                 save_options = types.any
