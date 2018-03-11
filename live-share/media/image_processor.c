@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <string.h> // NULL
+#include <stdbool.h>
 #include <stdlib.h> // atexit
 #include <lua.h> // lua*
 #include <lauxlib.h> // luaL*
@@ -36,39 +37,15 @@ static int ls_lua_init(lua_State* l)
     if(VIPS_INIT(luaL_checkstring(l, 1)))
         return report_vips_error(l);
     atexit(vips_shutdown);
-    return 0;
-}
-
-enum
-{
-    LS_CONFIG_LEAK_CHECK,
-    LS_CONFIG_CONCURRENCY
-};
-static int ls_lua_set(lua_State* l)
-{
-    static const char * const names[] =
-    {
-        "leak_check",
-        "concurrency",
-        NULL
-    };
-    switch(luaL_checkoption(l, 1, NULL, names))
-    {
-        case LS_CONFIG_LEAK_CHECK:
-            vips_leak_set(lua_toboolean(l, 2));
-            break;
-
-        case LS_CONFIG_CONCURRENCY:
-            vips_concurrency_set(luaL_checkinteger(l, 2));
-            break;
-    }
-    return 0;
+    lua_pushboolean(l, true);
+    return 1;
 }
 
 static int ls_lua_thread_shutdown(lua_State* l)
 {
     vips_thread_shutdown();
-    return 0;
+    lua_pushboolean(l, true);
+    return 1;
 }
 
 static int ls_lua_version(lua_State* l)
@@ -163,7 +140,6 @@ EXPORT int luaopen_share_media_image_processor(lua_State* l)
     const luaL_Reg reg[] =
     {
         {"init", ls_lua_init},
-        {"set", ls_lua_set},
         {"thread_shutdown", ls_lua_thread_shutdown},
         {"version", ls_lua_version},
         {"process", ls_lua_process},
