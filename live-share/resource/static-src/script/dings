@@ -1,0 +1,13 @@
+grid.js:
+    Uploads im Gitter anzeigen.
+    Einblend-Animationen abspielen.
+    IN: neue uploads
+    OUT: request für neue uploads
+
+view.js:
+    Modaler Overlay
+    Keybinds dafür
+    IN: overlay mit upload aktivieren
+
+main.js:
+    OUT: neue uploads

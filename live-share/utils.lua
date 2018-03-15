@@ -25,8 +25,13 @@ function utils.is_shady_file_name(file_name)
            file_name:match'\\'
 end
 
-function utils.respond_with_json(p, value)
-    local json = assert(cjson.encode(value))
+function utils.respond_with_json(p, value, empty_type)
+    local json
+    if not next(value) and empty_type == 'array' then
+        json = '[]'
+    else
+        json = assert(cjson.encode(value))
+    end
     p.response_headers:append('content-type', 'application/json')
     assert(p.stream:write_headers(p.response_headers, false))
     assert(p.stream:write_body_from_string(json))

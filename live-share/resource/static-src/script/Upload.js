@@ -16,8 +16,6 @@ export class Upload
 {
     constructor(props)
     {
-        const self = this;
-
         this.id        = props.id;
         this.time      = new Date(props.time);
         this.author    = props.user_name;
@@ -39,10 +37,10 @@ export class Upload
         listEntry.appendChild(authorEl);
         listEntry.style.backgroundImage = "url('"+this.thumbnailUrl+"')";
         listEntry.href = '';
-        listEntry.addEventListener('click', function(e) {
-            setViewedUpload(self); // TODO
-            e.preventDefault();
-        });
+        //listEntry.addEventListener('click', function(e) {
+        //    setViewedUpload(self); // TODO
+        //    e.preventDefault();
+        //});
         this.listEntry = listEntry;
 
         listEntry.classList.add('loading');

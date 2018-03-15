@@ -88,8 +88,11 @@ end)
 @api {get} /upload/query Search for uploads
 @apiName QueryUpload
 @apiGroup Upload
+@apiDescription
+This endpoint *will* change in the future.
 
 @apiParam {DateTime} [before] Select uploads created before given timestamp. (query parameter)
+@apiParam {DateTime} [after] Select uploads created after given timestamp. (query parameter)
 @apiParam {String} [order_asc] ... (query parameter)
 @apiParam {String} [order_desc] ... (query parameter)
 @apiParam {Number} [limit=100] ... (query parameter)
@@ -128,6 +131,12 @@ server.router:get('/upload/query', function(p)
         s:raw'WHERE time < ':var(time)
     end
 
+    if p.query.after then
+        local time = assert_parameter(datetime.parse_iso_date_time(p.query.after),
+                                      "Malformatted date time in 'before' field.")
+        s:raw'WHERE time > ':var(time)
+    end
+
     if p.query.order_asc then
         s:raw' ORDER BY ':id(p.query.order_asc):raw' ASC'
     end
@@ -146,7 +155,7 @@ server.router:get('/upload/query', function(p)
 
     p.response_headers:append(':status', '200')
     p.response_headers:append('cache-control', utils.cache_control_dynamic)
-    utils.respond_with_json(p, results)
+    utils.respond_with_json(p, results, 'array')
 end)
 
 --[[

@@ -14,3 +14,19 @@ export function assert(v, msg) {
     else
         throw new Error(msg || 'assertion failed');
 }
+
+export function promiseFromRequest(request) {
+    return new Promise(function(resolve, reject) {
+        request.addEventListener('error', e => reject(e.error));
+        request.addEventListener('load', () => resolve(request.response));
+    });
+}
+
+export function promiseFromObservable(observable) {
+    observable = observable.first();
+    //return new Promise(observable.subscribe);
+    return new Promise(observable.subscribe.bind(observable));
+    //return new Promise(function(resolve, reject) {
+    //    observable.subscribe(resolve, reject);
+    //});
+}

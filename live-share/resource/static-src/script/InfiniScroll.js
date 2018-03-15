@@ -39,7 +39,7 @@ class EntryStreamSide {
                 placeholders.push(p);
             }
         else
-            for(let i = 0; i < diff; i++)
+            for(let i = 0; i < -diff; i++)
                 this.removeElement(placeholders.pop());
         assert(placeholders.length === count);
     }
@@ -53,6 +53,7 @@ class EntryStreamSide {
     end() {
         this.ended = true;
         this.requestedEntryCount = 0;
+        console.log('stream ended');
     }
 
     async requestEntries(count) {
@@ -66,12 +67,14 @@ class EntryStreamSide {
 
         this.requestRunning = true;
         try {
-            const requestedEntryCount = this.requestedEntryCount;
-            const entries =
-                await this._requestEntries(this.firstEntry, requestedEntryCount);
-            entries.forEach(this.insertEntry.bind(this));
-            if(entries.length < requestedEntryCount)
-                end();
+            while(!this.ended && this.requestedEntryCount > 0) {
+                const requestedEntryCount = this.requestedEntryCount;
+                const entries =
+                    await this._requestEntries(this.firstEntry, requestedEntryCount);
+                entries.forEach(this.insertEntry.bind(this));
+                if(entries.length < requestedEntryCount)
+                    this.end();
+            }
         } finally {
             this.requestRunning = false;
         }
@@ -104,6 +107,13 @@ export class InfiniScroll {
         this.element.appendChild(this.entryContainer);
         // Contains the loaded entries.
 
+        this.bufferDistance = 500; // in pixels
+        // Minimum distance to scrollElement top and bottom.
+
+        this.minRequestCount = 10;
+
+        const minUpdateRate = 400; // in milliseconds
+
         const requestEntries = o.requestEntries;
         const removeElement = function(element) {
             this.entryContainer.removeChild(element);
@@ -111,7 +121,7 @@ export class InfiniScroll {
 
         this.frontEntryStream = new EntryStreamSide({
             requestEntries: function(referenceEntry, count) {
-                return requestEntries(referenceEntry, 'before', count);
+                return requestEntries(referenceEntry, 'after', count);
             },
             createPlaceholder: o.createEntryPlaceholderElement,
             replacePlaceholder: o.replacePlaceholder,
@@ -123,7 +133,7 @@ export class InfiniScroll {
         });
         this.backEntryStream = new EntryStreamSide({
             requestEntries: function(referenceEntry, count) {
-                return requestEntries(referenceEntry, 'after', count);
+                return requestEntries(referenceEntry, 'before', count);
             },
             createPlaceholder: o.createEntryPlaceholderElement,
             replacePlaceholder: o.replacePlaceholder,
@@ -139,7 +149,7 @@ export class InfiniScroll {
                 timeoutId = window.setTimeout(function() {
                     timeoutId = null;
                     this.update();
-                }.bind(this), 400);
+                }.bind(this), minUpdateRate);
             }
         }.bind(this);
         this.scrollEventSource.addEventListener('scroll', this.scrollEventCallback);
@@ -152,19 +162,33 @@ export class InfiniScroll {
         this.entryContainer.remove();
     }
 
-    async update() {
+    get distanceToTop() {
         // TODO: Distance from .element to .scrollElement?
+        return this.scrollElement.scrollTop;
+    }
 
-        const scrollTop = this.scrollElement.scrollTop;
-        const scrollBottom = scrollTop + this.scrollElement.clientHeight;
-        const scrollHeight = this.scrollElement.scrollHeight;
+    get distanceToBottom() {
+        const scrollElement = this.scrollElement;
+        const scrollTop = scrollElement.scrollTop;
+        const scrollBottom = scrollTop + scrollElement.clientHeight;
+        const scrollHeight = scrollElement.scrollHeight;
+        return scrollHeight - scrollBottom;
+    }
 
-        const distanceToTop = scrollTop;
-        const distanceToBottom = scrollHeight - scrollBottom;
+    async update() {
+        const frontStream = this.frontEntryStream;
+        const backStream = this.backEntryStream;
+        const bufferDistance = this.bufferDistance;
+        const count = this.minRequestCount;
 
-        if(distanceToTop <= 500) // TODO: Make configuratable
-            this.frontEntryStream.requestEntries(10);
-        if(distanceToBottom <= 500) // TODO: Make configuratable
-            this.backEntryStream.requestEntries(10);
+        //while(!frontStream.ended && this.distanceToTop <= bufferDistance) {
+        //    frontStream.requestEntries(count);
+        //}
+
+        while(!backStream.ended && this.distanceToBottom <= bufferDistance) {
+            console.log('backEntryStream: request entries');
+            backStream.requestEntries(count);
+            console.log(`buffer: ${this.distanceToBottom}px`);
+        }
     }
 }
