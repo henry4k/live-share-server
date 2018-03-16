@@ -30,3 +30,16 @@ export function promiseFromObservable(observable) {
     //    observable.subscribe(resolve, reject);
     //});
 }
+
+export function observableFromEventSource(eventSource, eventName) {
+    return Observable.create(function(observable) { // subscribe callback
+        const eventFn = e => observable.next(e.data);
+        const errorFn = e => observable.error(e);
+        eventSource.addEventListener(eventName, eventFn);
+        eventSource.addEventListener('error', errorFn);
+        return function() { // unsubscribe callback
+            eventSource.removeEventListener(eventName, eventFn);
+            eventSource.removeEventListener('error', errorFn);
+        };
+    });
+}

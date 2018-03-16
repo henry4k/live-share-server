@@ -1,28 +1,3 @@
-Infinite Scrolling:
+View.js funktionstüchtig machen. D.h. das man auf Einträge klicken kann etc.
 
-Es gibt drei Bereiche:
-- sichtbarer Bereich
-- geladener Bereich
-- zu ladender Bereich
-
-Ein Algoritmus bekommt als Eingabeparameter den sichtbaren Bereich und wird
-ausgeführt, wenn sich dieser ändert.  Die Ausgabe des Algoritmus ist:
-- wie viele Einträge von oben gelöscht oder hinzugefügt werden sollen
-- wie viele Einträge von unten gelöscht oder hinzugefügt werden sollen
-
-====
-
-Um das unendliche Scrollen zu ermöglichen, werden im DOM zwei Platzhalter
-(unsichtbare Elemente) angelegt:
-- Einer am Anfang, das den Platz der entladenen Elemente einnimmt.
-  Wenn n die Anzahl der entladenen Element ist und h die Höhe eines Elementes,
-  dann hat dieser Platzhalter immer die Höhe n*h.
-- Einer am Ende, der den Platz vom letzten geladenen Element bis zum Ende des
-  Browserfensters einnimmt.
-
-wird im DOM ein unsichtbares
-Element angelegt, was das Fenster entsprechend vergrößert.
-Das Element nimmt bis zus
-
-Für den Platzhalter wird die Höhe der Einträge aus dem CSS ermittelt.
-(Über JavaScript lassen sich Eigenschaften von CSS Regeln abfragen.)
+Layout-Trashing reduzieren/verhindern. -> fastdom bzw. strictdom angucken

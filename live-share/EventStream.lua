@@ -50,6 +50,7 @@ return function(p)
     headers:append('content-type', 'text/event-stream')
     headers:append('cache-control', utils.cache_control_dynamic)
     assert(p.stream:write_headers(headers, false))
+    assert(p.stream.connection:flush())
 
     return setmetatable(self, EventStream)
 end

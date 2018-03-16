@@ -13,11 +13,11 @@ class EntryStreamSide {
      * @param {Function} o.removeElement
      */
     constructor(o) {
-        this._requestEntries    = assert(o.requestEntries);
-        this.createPlaceholder  = assert(o.createPlaceholder);
-        this.replacePlaceholder = assert(o.replacePlaceholder);
-        this.pushElement        = assert(o.pushElement);
-        this.removeElement      = assert(o.removeElement);
+        this._requestEntries     = assert(o.requestEntries);
+        this.createPlaceholder   = assert(o.createPlaceholder);
+        this._replacePlaceholder = assert(o.replacePlaceholder);
+        this.pushElement         = assert(o.pushElement);
+        this.removeElement       = assert(o.removeElement);
 
         this.ended = false; // no more entries available
         this.firstEntry = null;
@@ -44,9 +44,17 @@ class EntryStreamSide {
         assert(placeholders.length === count);
     }
 
+    // This can be used to manually add entries.
     insertEntry(entry) {
+        const el = this.createPlaceholder();
+        this.pushElement(el); // TODO: Also a ghetto solution. :/
+        this._replacePlaceholder(el, entry);
+        this.firstEntry = entry;
+    }
+
+    replacePlaceholder(entry) {
         const placeholder = this.placeholders.shift();
-        this.replacePlaceholder(placeholder, entry);
+        this._replacePlaceholder(placeholder, entry);
         this.firstEntry = entry;
     }
 
@@ -71,7 +79,7 @@ class EntryStreamSide {
                 const requestedEntryCount = this.requestedEntryCount;
                 const entries =
                     await this._requestEntries(this.firstEntry, requestedEntryCount);
-                entries.forEach(this.insertEntry.bind(this));
+                entries.forEach(this.replacePlaceholder.bind(this));
                 if(entries.length < requestedEntryCount)
                     this.end();
             }
@@ -126,8 +134,7 @@ export class InfiniScroll {
             createPlaceholder: o.createEntryPlaceholderElement,
             replacePlaceholder: o.replacePlaceholder,
             pushElement: function(element) {
-                const container = this.entryContainer;
-                container.insertBefore(element, container.firstChild);
+                this.entryContainer.appendChild(element);
             }.bind(this),
             removeElement: removeElement
         });
@@ -138,7 +145,8 @@ export class InfiniScroll {
             createPlaceholder: o.createEntryPlaceholderElement,
             replacePlaceholder: o.replacePlaceholder,
             pushElement: function(element) {
-                this.entryContainer.appendChild(element);
+                const container = this.entryContainer;
+                container.insertBefore(element, container.firstChild);
             }.bind(this),
             removeElement: removeElement
         });
@@ -190,5 +198,10 @@ export class InfiniScroll {
             backStream.requestEntries(count);
             console.log(`buffer: ${this.distanceToBottom}px`);
         }
+    }
+
+    // This can be used to manually add entries.
+    insertEntryAtFront(entry) {
+        this.frontEntryStream.insertEntry(entry);
     }
 }

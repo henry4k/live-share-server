@@ -2,6 +2,7 @@ import { Observable } from 'rxjs';
 import { Upload } from './Upload';
 import { promiseFromRequest, promiseFromObservable } from './utils.js';
 import { InfiniScroll } from './InfiniScroll';
+import { assert } from './utils';
 
 function requestUploads(referenceUpload, // can be null
                         direction, // 'before', 'after'
@@ -50,8 +51,11 @@ function replacePlaceholder(placeholder, upload) {
     parent.replaceChild(upload.listEntry, placeholder);
 }
 
+let infiniScroll = null;
+
 export function init() {
-    return new InfiniScroll({
+    assert(!infiniScroll);
+    infiniScroll = new InfiniScroll({
         element: document.getElementById('upload-list'),
         scrollElement: document.documentElement,
         scrollEventSource: window,
@@ -59,4 +63,8 @@ export function init() {
         createEntryPlaceholderElement: createUploadPlaceholderElement,
         replacePlaceholder: replacePlaceholder
     });
+}
+
+export function insertEntryAtFront(entry) {
+    infiniScroll.insertEntryAtFront(entry);
 }

@@ -133,23 +133,8 @@ $overlay-animation: 0.2s;
     {
         display: flex;
         flex-direction: row;
-        flex-wrap: wrap;
+        flex-wrap: wrap-reverse;
         justify-content: center;
-    }
-
-    .placeholder
-    {
-        &:first-child
-        {
-            background-color: rgba(0, 0, 255, 0.5);
-        }
-
-        background-color: rgba(255, 0, 255, 0.5);
-
-        &:last-child
-        {
-            background-color: rgba(255, 0, 0, 0.5);
-        }
     }
 }
 
@@ -176,8 +161,8 @@ $entry-animation: 1s;
 
     visibility: visible;
     opacity: 1;
-    background-position-y: 0px;
     background-repeat: no-repeat;
+    background-position-y: 0;
 
     > *
     {
@@ -199,11 +184,15 @@ $entry-animation: 1s;
         text-align: right;
     }
 
+    &.new.loading
+    {
+        background-position-y: $item-size;
+    }
+
     &.loading
     {
         visibility: hidden;
         opacity: 0;
-        background-position-y: $item-size;
     }
 
     transition: visibility $entry-animation linear,

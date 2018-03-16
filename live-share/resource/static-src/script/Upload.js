@@ -12,10 +12,8 @@ function loadImage(url)
     });
 }
 
-export class Upload
-{
-    constructor(props)
-    {
+export class Upload {
+    constructor(props) {
         this.id        = props.id;
         this.time      = new Date(props.time);
         this.author    = props.user_name;
@@ -49,18 +47,15 @@ export class Upload
         });
     }
 
-    destroy()
-    {
+    destroy() {
         this.listEntry.remove();
     }
 
-    get url()
-    {
+    get url() {
         return '/upload/'+this.id;
     }
 
-    get thumbnailUrl()
-    {
+    get thumbnailUrl() {
         return '/upload/'+this.id+'/thumbnail';
     }
 }

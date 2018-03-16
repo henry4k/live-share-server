@@ -1,18 +1,19 @@
-import { Observable } from 'rxjs';
 import { Upload } from './Upload';
-import { init as initGrid } from './grid.js';
-//import { init as initView } from './view.js';
+import { init as initGrid, insertEntryAtFront } from './grid';
+//import { init as initView } from './view';
+import { observableFromEventSource } from './utils';
 
 window.addEventListener('load', function(e) {
     initGrid();
     //initView();
 
-    //const updatesEventSource = new EventSource('/updates');
-    //const uploadStream = Observable.fromEvent(updatesEventSource, 'new-upload')
-    //    .map(event => JSON.parse(e.data))
-    //    .map(uploadProps => new Upload(uploadProps));
-    //    .subscribe(function(e) {
-    //        prependUploadEntry(upload);
-    //        setViewedUpload(upload);
-    //    });
+    const updatesEventSource = new EventSource('/updates');
+    const uploadStream = observableFromEventSource(updatesEventSource, 'new-upload')
+        .map(data => JSON.parse(data))
+        .map(uploadProps => new Upload(uploadProps))
+        .subscribe(function(upload) {
+            upload.listEntry.classList.add('new');
+            insertEntryAtFront(upload);
+            //view.setViewedUpload(upload);
+        });
 });

@@ -1,6 +1,7 @@
 local condition = require'cqueues.condition'
 local EventStream = require'live-share.EventStream'
 local server = require'live-share.server'
+local utils = require'live-share.utils'
 local log = require'live-share.log'
 
 
@@ -36,15 +37,23 @@ server.router:get('/updates', function(p)
     observer_events[event_stream] = event_list -- event_stream doubles as unique key
 
     while true do
-        local condition_signaled, socket_signaled = event_condition:wait(socket)
+        local condition_signaled,
+              socket_signaled,
+              shutdown_signaled =
+            event_condition:wait(socket, utils.shutdown_promise)
 
         if condition_signaled then
-            print'condition'
+            print'update-stream: condition signaled'
         end
 
         if socket_signaled then
-            print'socket'
+            print'update-stream: socket signaled'
             break -- TODO: Is this the solution?
+        end
+
+        if shutdown_signaled then
+            print'update-stream: shutdown signaled'
+            break
         end
 
         if socket:eof'r' then

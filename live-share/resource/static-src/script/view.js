@@ -2,7 +2,7 @@ import { Observable } from 'rxjs';
 import { createStore } from './utils';
 import { Upload } from './Upload';
 import { ImageView, VideoView } from './MediaView';
-import { test } from './test';
+import { insertEntryAtFront } from './grid';
 
 var uploadViewElement        = null;
 var uploadPlaceholderElement = null;
@@ -60,35 +60,6 @@ function setViewedUpload(upload) {
     mediaView.set(upload.url, upload.width, upload.height);
 
     uploadViewElement.classList.remove('hidden');
-}
-
-function getLatestUploads(count) {
-    const now = new Date(Date.now());
-    const url = '/upload/query?limit='+count+'&order_asc=time&before='+now.toISOString();
-    const request = new XMLHttpRequest();
-    request.responseType = 'json';
-
-    Observable.fromEvent(request, 'load')
-        .do(() => {
-            if(request.responseType !== 'json')
-                throw new Error('Invalid response type.');
-        })
-        .mergeMap(() => Observable.from(request.response)) // unpack received array
-        .map(uploadProps => new Upload(uploadProps))
-        .subscribe(prependUploadEntry);
-    /*
-    request.addEventListener('load', function(e) {
-        if(request.responseType !== 'json')
-            throw new Error('Invalid response type.');
-
-        request.response.forEach(uploadProps => {
-            const upload = new Upload(uploadProps);
-            prependUploadEntry(upload);
-        });
-    });
-    */
-    request.open('GET', url);
-    request.send();
 }
 
 export function init() {
