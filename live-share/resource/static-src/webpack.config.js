@@ -16,7 +16,8 @@ const nodeLibs = [
     'regenerator-runtime',
     'core-js',
     'rxjs',
-    'immutable'
+    'immutable',
+    'fastdom'
 ];
 const outputPath = relativePath('../static');
 const generateSourceMaps = true;

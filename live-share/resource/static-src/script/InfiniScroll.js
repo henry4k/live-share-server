@@ -1,4 +1,4 @@
-// TODO: Filename is temporary.
+import { measure, mutate } from './fastdom-promised';
 import { assert } from './utils';
 
 class EntryStreamSide {
@@ -64,16 +64,7 @@ class EntryStreamSide {
         console.log('stream ended');
     }
 
-    async requestEntries(count) {
-        if(this.ended)
-            return;
-
-        this.requestedEntryCount += count;
-
-        if(this.requestRunning)
-            return;
-
-        this.requestRunning = true;
+    async runRequest() {
         try {
             while(!this.ended && this.requestedEntryCount > 0) {
                 const requestedEntryCount = this.requestedEntryCount;
@@ -86,6 +77,19 @@ class EntryStreamSide {
         } finally {
             this.requestRunning = false;
         }
+    }
+
+    requestEntries(count) {
+        if(this.ended)
+            return;
+
+        this.requestedEntryCount += count;
+
+        if(this.requestRunning)
+            return;
+
+        this.requestRunning = true;
+        this.runRequest();
     }
 }
 
@@ -110,10 +114,18 @@ export class InfiniScroll {
         assert(o.createEntryPlaceholderElement);
         assert(o.replacePlaceholder);
 
-        this.entryContainer = document.createElement('div');
-        this.entryContainer.classList.add('loaded-entries');
-        this.element.appendChild(this.entryContainer);
-        // Contains the loaded entries.
+        const frontContainer = document.createElement('div');
+        frontContainer.classList.add('loaded-entries');
+        frontContainer.classList.add('front');
+        this.frontElementContainer = frontContainer;
+
+        const backContainer = document.createElement('div');
+        backContainer.classList.add('loaded-entries');
+        backContainer.classList.add('back');
+        this.backElementContainer = backContainer;
+
+        this.element.appendChild(frontContainer);
+        this.element.appendChild(backContainer);
 
         this.bufferDistance = 500; // in pixels
         // Minimum distance to scrollElement top and bottom.
@@ -123,9 +135,6 @@ export class InfiniScroll {
         const minUpdateRate = 400; // in milliseconds
 
         const requestEntries = o.requestEntries;
-        const removeElement = function(element) {
-            this.entryContainer.removeChild(element);
-        }.bind(this);
 
         this.frontEntryStream = new EntryStreamSide({
             requestEntries: function(referenceEntry, count) {
@@ -134,9 +143,11 @@ export class InfiniScroll {
             createPlaceholder: o.createEntryPlaceholderElement,
             replacePlaceholder: o.replacePlaceholder,
             pushElement: function(element) {
-                this.entryContainer.appendChild(element);
+                frontContainer.appendChild(element);
             }.bind(this),
-            removeElement: removeElement
+            removeElement: function(element) {
+                frontContainer.removeChild(element);
+            }.bind(this)
         });
         this.backEntryStream = new EntryStreamSide({
             requestEntries: function(referenceEntry, count) {
@@ -145,10 +156,12 @@ export class InfiniScroll {
             createPlaceholder: o.createEntryPlaceholderElement,
             replacePlaceholder: o.replacePlaceholder,
             pushElement: function(element) {
-                const container = this.entryContainer;
-                container.insertBefore(element, container.firstChild);
+                backContainer.appendChild(element);
+                //container.insertBefore(element, container.firstChild);
             }.bind(this),
-            removeElement: removeElement
+            removeElement: function(element) {
+                backContainer.removeChild(element);
+            }.bind(this)
         });
 
         let timeoutId = null;
@@ -167,7 +180,8 @@ export class InfiniScroll {
 
     destroy() {
         this.scrollEventSource.removeEventListener(this.scrollEventCallback);
-        this.entryContainer.remove();
+        this.element.removeChild(this.frontElementContainer);
+        this.element.removeChild(this.backElementContainer);
     }
 
     get distanceToTop() {
@@ -196,6 +210,7 @@ export class InfiniScroll {
         while(!backStream.ended && this.distanceToBottom <= bufferDistance) {
             console.log('backEntryStream: request entries');
             backStream.requestEntries(count);
+            await measure(() => true); // just wait for next measurement point
             console.log(`buffer: ${this.distanceToBottom}px`);
         }
     }

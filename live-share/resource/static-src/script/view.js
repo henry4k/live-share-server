@@ -2,14 +2,12 @@ import { Observable } from 'rxjs';
 import { createStore } from './utils';
 import { Upload } from './Upload';
 import { ImageView, VideoView } from './MediaView';
-import { insertEntryAtFront } from './grid';
 
-var uploadViewElement        = null;
-var uploadPlaceholderElement = null;
-var uploadImage              = null;
-var uploadVideo              = null;
-var uploadDetailsElement     = null;
-var uploadListElement        = null;
+let uploadViewElement        = null;
+let uploadPlaceholderElement = null;
+let uploadImage              = null;
+let uploadVideo              = null;
+let uploadDetailsElement     = null;
 
 function setUploadPlaceholder(imageUrl, width, height) {
     const element = uploadPlaceholderElement;
@@ -47,7 +45,12 @@ function beginClearViewedUpload() {
     uploadViewElement.addEventListener('transitioncancel', clearViewedUpload);
 }
 
-function setViewedUpload(upload) {
+function onMediaViewReady() {
+    console.log('onMediaViewReady');
+    beginClearUploadPlaceholder();
+}
+
+export function setViewedUpload(upload) {
     setUploadPlaceholder(upload.thumbnailUrl,
                          upload.width,
                          upload.height);
@@ -65,8 +68,8 @@ function setViewedUpload(upload) {
 export function init() {
     uploadViewElement        = document.getElementById('upload-view');
     uploadPlaceholderElement = document.getElementById('upload-placeholder');
-    uploadImage              = new ImageView(document.getElementById('upload-image'));
-    uploadVideo              = new VideoView(document.getElementById('upload-video'));
+    uploadImage              = new ImageView(document.getElementById('upload-image'), onMediaViewReady);
+    uploadVideo              = new VideoView(document.getElementById('upload-video'), onMediaViewReady);
     uploadDetailsElement     = document.getElementById('upload-details');
 
     uploadImage.reset();

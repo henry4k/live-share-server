@@ -54,7 +54,7 @@ $overlay-animation: 0.2s;
     align-items: center;
     //align-content: center;
 
-    visibility: visible;
+    //visibility: visible;
     opacity: 1;
 
     & > *
@@ -66,7 +66,8 @@ $overlay-animation: 0.2s;
 
     &.hidden
     {
-        visibility: hidden;
+        //visibility: hidden;
+        display: none;
         opacity: 0;
 
         & > *
@@ -75,8 +76,8 @@ $overlay-animation: 0.2s;
         }
     }
 
-    transition: visibility $overlay-animation linear,
-                opacity    $overlay-animation ease-out;
+    transition: display $overlay-animation linear,
+                opacity $overlay-animation ease-out;
 }
 
 #upload-view
@@ -133,8 +134,13 @@ $overlay-animation: 0.2s;
     {
         display: flex;
         flex-direction: row;
-        flex-wrap: wrap-reverse;
         justify-content: center;
+        //flex-wrap: wrap;
+
+        &.back
+        {
+            flex-wrap: wrap-reverse;
+        }
     }
 }
 

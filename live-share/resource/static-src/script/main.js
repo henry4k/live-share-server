@@ -1,11 +1,11 @@
 import { Upload } from './Upload';
 import { init as initGrid, insertEntryAtFront } from './grid';
-//import { init as initView } from './view';
+import { init as initView, setViewedUpload } from './view';
 import { observableFromEventSource } from './utils';
 
 window.addEventListener('load', function(e) {
     initGrid();
-    //initView();
+    initView();
 
     const updatesEventSource = new EventSource('/updates');
     const uploadStream = observableFromEventSource(updatesEventSource, 'new-upload')
@@ -14,6 +14,6 @@ window.addEventListener('load', function(e) {
         .subscribe(function(upload) {
             upload.listEntry.classList.add('new');
             insertEntryAtFront(upload);
-            //view.setViewedUpload(upload);
+            setViewedUpload(upload);
         });
 });

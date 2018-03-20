@@ -1,3 +1,5 @@
+import { setViewedUpload } from './view';
+
 function loadImage(url)
 {
     const image = document.createElement('img');
@@ -35,10 +37,10 @@ export class Upload {
         listEntry.appendChild(authorEl);
         listEntry.style.backgroundImage = "url('"+this.thumbnailUrl+"')";
         listEntry.href = '';
-        //listEntry.addEventListener('click', function(e) {
-        //    setViewedUpload(self); // TODO
-        //    e.preventDefault();
-        //});
+        listEntry.addEventListener('click', function(e) {
+            setViewedUpload(this);
+            e.preventDefault();
+        }.bind(this));
         this.listEntry = listEntry;
 
         listEntry.classList.add('loading');

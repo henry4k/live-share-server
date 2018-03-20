@@ -1,34 +1,26 @@
 export class MediaView
 {
-    constructor(element)
+    constructor(element, readyFn)
     {
         this.element = element;
-        this.eventTarget = new EventTarget();
-    }
-
-    addEventListener()
-    {
-        this.eventTarget.addEventListener(...arguments);
-    }
-
-    removeEventListener()
-    {
-        this.eventTarget.removeEventListener(...arguments);
+        this.readyFn = readyFn;
     }
 
     set(sourceUrl, width, height)
     {
-        this._setupReadyEvent();
+        console.log('MediaView.set');
 
         this.element.src = sourceUrl;
         this.element.style.maxWidth  = ''+width+'px';
         this.element.style.maxHeight = ''+height+'px';
         this.show();
+
+        this._setupReadyEvent();
     }
 
     reset()
     {
-        //this._cancelReadyEvent(); // HMMMM!
+        this._cancelReadyEvent();
 
         this.hide();
         this.element.src = '';
@@ -49,21 +41,40 @@ export class MediaView
 
 export class ImageView extends MediaView
 {
-    constructor(element)
+    constructor()
     {
-        super(element);
+        super(...arguments);
     }
 
     _setupReadyEvent()
     {
-        //this.element.addEventListener('load', )
+        console.log(this);
+        if(this.element.complete)
+            this.readyFn();
+        else
+            this.element.addEventListener('load', this.readyFn);
+    }
+
+    _cancelReadyEvent()
+    {
+        this.element.removeEventListener('load', this.readyFn);
     }
 }
 
 export class VideoView extends MediaView
 {
-    constructor(element)
+    constructor()
     {
-        super(element);
+        super(...arguments);
+    }
+
+    _setupReadyEvent()
+    {
+        console.log('VideoView._setupReadyEvent not implemented');
+    }
+
+    _cancelReadyEvent()
+    {
+        console.log('VideoView._cancelReadyEvent not implemented');
     }
 }
