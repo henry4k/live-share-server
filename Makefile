@@ -38,7 +38,7 @@ endif
 live-share/media/image_processor$(LIB_EXT): _CFLAGS += $(VIPS_CFLAGS)
 live-share/media/image_processor$(LIB_EXT): _LDFLAGS += $(VIPS_LDFLAGS)
 %$(LIB_EXT): %.c
-	$(CC) $(_CFLAGS) $(CFLAGS) $(_LDFLAGS) $(LIBFLAG) $(LDFLAGS) -o $@ $^
+	$(CC) $^ -o $@ $(_CFLAGS) $(CFLAGS) $(_LDFLAGS) $(LIBFLAG) $(LDFLAGS)
 
 doc:
 	mkdir $@
