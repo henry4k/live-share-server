@@ -20,8 +20,8 @@ const nodeLibs = [
     'fastdom'
 ];
 const outputPath = relativePath('../static');
-const generateSourceMaps = true;
-const minimize = false;
+const generateSourceMaps = false;
+const minimize = true;
 
 const minimizePlugins = [];
 if(minimize)

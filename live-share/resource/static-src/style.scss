@@ -38,8 +38,9 @@ body
 }
 
 $overlay-animation: 0.2s;
+//$overlay-animation: 10s;
 
-#upload-view, #error
+#upload-view-overlay, #error
 {
     position: fixed;
     top: 0;
@@ -48,13 +49,7 @@ $overlay-animation: 0.2s;
     height: 100%;
     z-index: 1;
 
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    //align-content: center;
-
-    //visibility: visible;
+    visibility: visible;
     opacity: 1;
 
     & > *
@@ -66,8 +61,7 @@ $overlay-animation: 0.2s;
 
     &.hidden
     {
-        //visibility: hidden;
-        display: none;
+        visibility: hidden;
         opacity: 0;
 
         & > *
@@ -76,27 +70,56 @@ $overlay-animation: 0.2s;
         }
     }
 
-    transition: display $overlay-animation linear,
-                opacity $overlay-animation ease-out;
+    transition: visibility $overlay-animation linear,
+                opacity    $overlay-animation ease-out;
 }
 
-#upload-view
+#upload-view-overlay
 {
     background-color: rgba(0, 0, 0, 0.8);
 }
 
-#upload-placeholder, #upload-image, #upload-video
+#upload-view-overlay, #upload-view, .upload-media, #error
+{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    //align-content: center;
+}
+
+.upload-media
 {
     flex: 1 1 auto;
 
     border-radius: $border-radius;
-    box-shadow: 0 0 20px black; // TODO: Create container element for placeholder,image/video.
+    box-shadow: 0 0 20px black;
+
+    // This clips the blurred placeholder image:
+    overflow: hidden;
+    filter: blur(0px); // without this, `overflow: hidden` does not work ... weird
+    background-color: black; // because the blur filter creates transparent areas
+}
+
+#upload-image, #upload-video
+{
+    &.disabled
+    {
+        display: none;
+    }
+
+    &.hidden
+    {
+        visibility: hidden;
+    }
 }
 
 #upload-placeholder
 {
     position: absolute;
     z-index: 1;
+
+    filter: blur(10px);
 
     visibility: visible;
     opacity: 1;
@@ -135,11 +158,11 @@ $overlay-animation: 0.2s;
         display: flex;
         flex-direction: row;
         justify-content: center;
-        //flex-wrap: wrap;
+        flex-wrap: wrap-reverse;
 
         &.back
         {
-            flex-wrap: wrap-reverse;
+            flex-wrap: wrap;
         }
     }
 }

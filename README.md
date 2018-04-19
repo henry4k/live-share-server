@@ -11,7 +11,6 @@ Words go here.
 Runtime dependencies:
 
 - Lua 5.2
-- LuaJIT (required by lua-vips)
 - [libvips](https://jcupitt.github.io/libvips)
 - [FFmpeg](https://ffmpeg.org)
 - [Argon2](https://github.com/P-H-C/phc-winner-argon2)
@@ -23,18 +22,18 @@ Runtime dependencies:
 Development dependencies:
 
 - luarocks-5.2
-- luarocks-5.1 (for LuaJIT)
+- make
+- pkg-config
 - For building the static content:
   - nodejs
   - npm
-  - (and everthing mentioned in `web/package.json`)
 
 
 ## Setup
 
-1. Install the dependencies mentioned above.
-2. Install further backend dependencies by running `./install-deps`.
-3. Build the static web content by running `npm install` and `npm run build` in `web`.
+1. Run `luarocks make` in the projects root directory.
+2. Adapt `config.lua` to your needs.
+3. Use `./server run` to start the server.
 
 
 ## License and copyright

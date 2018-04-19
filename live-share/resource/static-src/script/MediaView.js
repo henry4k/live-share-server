@@ -1,9 +1,13 @@
 export class MediaView
 {
-    constructor(element, readyFn)
+    constructor(element, readyCallbackUser)
     {
         this.element = element;
-        this.readyFn = readyFn;
+        this.readyCallbackUser = readyCallbackUser;
+        this.readyCallback = this.onReady.bind(this);
+
+        this.disable();
+        this.hide();
     }
 
     set(sourceUrl, width, height)
@@ -13,29 +17,46 @@ export class MediaView
         this.element.src = sourceUrl;
         this.element.style.maxWidth  = ''+width+'px';
         this.element.style.maxHeight = ''+height+'px';
-        this.show();
 
+        this.enable();
         this._setupReadyEvent();
+    }
+
+    onReady()
+    {
+        this.show();
+        this.readyCallbackUser();
     }
 
     reset()
     {
         this._cancelReadyEvent();
 
+        this.disable();
         this.hide();
         this.element.src = '';
         this.element.style.maxWidth  = '';
         this.element.style.maxHeight = '';
     }
 
+    enable()
+    {
+        this.element.classList.remove('disabled');
+    }
+
+    disable()
+    {
+        this.element.classList.add('disabled');
+    }
+
     show()
     {
-        this.element.style.display = '';
+        this.element.classList.remove('hidden');
     }
 
     hide()
     {
-        this.element.style.display = 'none';
+        this.element.classList.add('hidden');
     }
 }
 
@@ -48,16 +69,17 @@ export class ImageView extends MediaView
 
     _setupReadyEvent()
     {
-        console.log(this);
+        //this.timeout = window.setTimeout(this.readyCallback, 100);
         if(this.element.complete)
-            this.readyFn();
+            this.readyCallback();
         else
-            this.element.addEventListener('load', this.readyFn);
+            this.element.addEventListener('load', this.readyCallback);
     }
 
     _cancelReadyEvent()
     {
-        this.element.removeEventListener('load', this.readyFn);
+        //window.clearTimeout(this.timeout);
+        this.element.removeEventListener('load', this.readyCallback);
     }
 }
 

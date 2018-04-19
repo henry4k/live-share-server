@@ -8,11 +8,17 @@
         <script type="text/javascript" src="script.js"></script>
     </head>
     <body>
-        <div id="upload-view" class="hidden">
-            <img id="upload-placeholder"></img>
-            <img id="upload-image"></img>
-            <video id="upload-video" autoplay loop muted></video>
-            <!--<span class="upload-details"></span>-->
+        <div id="upload-view-overlay" class="hidden">
+            <div id="upload-view">
+                <div class="upload-media">
+                    <img id="upload-placeholder" class="hidden"></img>
+                    <img id="upload-image"></img>
+                    <video id="upload-video" autoplay loop muted></video>
+                </div>
+                <span class="upload-details">
+                    <!--DETAILS GO HERE-->
+                </span>
+            </div>
         </div>
         <div id="upload-list"></div>
         <a id="source-link" href="https://github.com/henry4k/live-share-server"></a>

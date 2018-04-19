@@ -39,8 +39,8 @@ end
 
 -- See https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control#Examples
 utils.cache_control_dynamic = 'no-cache, no-store, must-revalidate'
-utils.cache_control_static  = 'public, max-age=600' -- 10 minutes
---utils.cache_control_static  = 'public, max-age=31536000' -- "forever"
+--utils.cache_control_static  = 'public, max-age=600' -- 10 minutes
+utils.cache_control_static  = 'public, max-age=31536000' -- "forever"
 
 local function get_source_path(stack_index)
     local info = debug.getinfo(stack_index+1, 'S')
