@@ -26,7 +26,7 @@ dependencies = {
     'middleclass ~> 4',
     'fat_error >= 0.6, < 1',
     'xcq-subprocess = 0.1',
-    'tableshape = dev-1' -- TODO: This should be a temporary workaround.
+    'tableshape ~> 2'
 }
 supported_platforms = {
     '!windows'
