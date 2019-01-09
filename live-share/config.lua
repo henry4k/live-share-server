@@ -77,8 +77,11 @@ function config.load(file_name)
                                        'argon2_d',
                                        'argon2_id'}:is_optional()
             } + defaults_to{}
-        } + defaults_to{}
+        } -- NOTE: tableshape can't apply defaults recursivly
     }
+
+    env.password = env.password or {} -- see above
+
     env = assert(config_shape:transform(env)) -- check and insert default values
 
     store = env

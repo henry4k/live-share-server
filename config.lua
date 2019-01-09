@@ -1,10 +1,7 @@
-port = 12345
-upload_directory = 'demo/uploads'
-database = 'demo/database.db'
+port = 80
+database = 'data/database.db'
+upload_directory = 'data/uploads'
 thumbnail =
 {
-    directory = 'demo/thumbnails'
-}
-password =
-{
+    directory = 'data/thumbnails'
 }

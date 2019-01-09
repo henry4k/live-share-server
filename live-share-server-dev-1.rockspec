@@ -23,6 +23,7 @@ dependencies = {
     'ansicolors ~> 1',
     'basexx >= 0.4, < 1',
     'lua-path >= 0.3, < 1',
+    'luafilesystem >= 1.6, < 2',
     'middleclass ~> 4',
     'fat_error >= 0.6, < 1',
     'xcq-subprocess = 0.1',
