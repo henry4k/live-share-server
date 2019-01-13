@@ -113,6 +113,8 @@ function server.run(t)
         if t.port == 0 then
             local bound_port = select(3, server_instance:localname())
             log.info('Now listening on port ', tostring(bound_port))
+        else
+            log.info'Ready' -- TODO: Debug
         end
     end
 

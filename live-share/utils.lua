@@ -93,7 +93,7 @@ function utils.get_temporary_file_name(t)
                                    tmp_file_counter,
                                    t.postfix or '')
     local filename = path.join(dir, basename)
-    assert(not path.exists(filename))
+    --assert(not path.exists(filename))
     return filename
 end
 

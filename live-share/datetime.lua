@@ -1,10 +1,12 @@
 local datetime = {}
 
 do
-    local t1 = os.time()
-    local d = os.date('!*t', t1)
-    local t2 = os.time(d)
-    datetime.utc_offset = t1 - t2
+    local now = os.time()
+    local utc_date   = os.date('!*t', now)
+    local local_date = os.date('*t', now)
+    local_date.isdst = false -- this is the trick
+    datetime.utc_offset = os.difftime(os.time(local_date), os.time(utc_date))
+    -- See: http://lua-users.org/wiki/TimeZone
 end
 
 local iso_date_time_format = '%Y-%m-%dT%H:%M:%SZ'
