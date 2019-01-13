@@ -70,8 +70,8 @@ test:
 	busted '--lua=$(LUA)' $@
 
 install:
-	cp server $(INSTALL_BINDIR)/live-share-server
 	cp --parents -t $(INSTALL_LIBDIR) $(shell find live-share -name '*$(LIB_EXT)')
 	cp --parents -t $(INSTALL_LUADIR) $(shell find live-share -name '*.lua')
 	cp --parents -t $(INSTALL_LUADIR) live-share/schema.sql
 	cp --parents -r -t $(INSTALL_LUADIR) live-share/resource/static
+	mv $(INSTALL_LUADIR)/live-share/cli.lua $(INSTALL_BINDIR)/live-share-server
