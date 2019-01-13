@@ -1,7 +1,7 @@
 port = 80
-database = 'data/database.db'
-upload_directory = 'data/uploads'
+database = 'database.db'
+upload_directory = 'uploads'
 thumbnail =
 {
-    directory = 'data/thumbnails'
+    directory = 'thumbnails'
 }
