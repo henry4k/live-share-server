@@ -6,6 +6,7 @@ ARG LUA_VERSION
 RUN set -o xtrace; \
     apk add --no-cache \
         lua$LUA_VERSION \
+        luarocks$LUA_VERSION \
         ffmpeg \
         argon2-libs \
         sqlite-libs \
@@ -26,7 +27,6 @@ ARG LUA_VERSION
 
 RUN set -o xtrace; \
     apk add --no-cache \
-        luarocks$LUA_VERSION \
         coreutils \
         gcc \
         make \
@@ -48,37 +48,32 @@ RUN set -o xtrace; \
 COPY live-share ./live-share
 COPY server .gitignore Makefile *.rockspec ./
 
-RUN echo "#!/usr/bin/env lua$LUA_VERSION" > server.new && \
-    cat server >> server.new && \
-    chmod +x server.new && \
-    rm server && \
-    mv server.new server
 RUN luarocks-$LUA_VERSION make
 RUN rm -r .gitignore \
           Makefile \
           *.rockspec \
           doc \
           live-share/resource/static-src
-
-COPY config.lua ./data/
-RUN mkdir data/uploads
-RUN mkdir data/thumbnails
+RUN mkdir uploads
+RUN mkdir thumbnails
 
 
 FROM base
 LABEL maintainer="Henry Kielmann <henrykielmann@gmail.com>"
 LABEL description="See https://github.com/henry4k/live-share-server"
 
-COPY --from=build /live-share ./
+#COPY --from=build /live-share ./
+COPY --from=build /usr/local/bin \
+                  /usr/local/bin
 COPY --from=build /usr/local/lib/lua \
                   /usr/local/lib/lua
 COPY --from=build /usr/local/share/lua \
                   /usr/local/share/lua
 
 EXPOSE 80
-VOLUME /live-share/data
+VOLUME /live-share
 
-ENTRYPOINT [ "./server", "--config", "data/config.lua" ]
+ENTRYPOINT [ "live-share-server" ]
 CMD [ "run" ]
 HEALTHCHECK --interval=5m --timeout=3s \
             CMD curl -f http://localhost/ || exit 1
