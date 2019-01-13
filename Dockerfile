@@ -49,26 +49,16 @@ COPY live-share ./live-share
 COPY server .gitignore Makefile *.rockspec ./
 
 RUN luarocks-$LUA_VERSION make
-RUN rm -r .gitignore \
-          Makefile \
-          *.rockspec \
-          doc \
-          live-share/resource/static-src
-RUN mkdir uploads
-RUN mkdir thumbnails
 
 
 FROM base
 LABEL maintainer="Henry Kielmann <henrykielmann@gmail.com>"
 LABEL description="See https://github.com/henry4k/live-share-server"
 
-#COPY --from=build /live-share ./
-COPY --from=build /usr/local/bin \
-                  /usr/local/bin
-COPY --from=build /usr/local/lib/lua \
-                  /usr/local/lib/lua
-COPY --from=build /usr/local/share/lua \
-                  /usr/local/share/lua
+COPY --from=build /live-share/config.lua \
+                  /live-share/
+COPY --from=build /usr/local \
+                  /usr/local
 
 EXPOSE 80
 VOLUME /live-share
