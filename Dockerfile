@@ -55,10 +55,10 @@ FROM base
 LABEL maintainer="Henry Kielmann <henrykielmann@gmail.com>"
 LABEL description="See https://github.com/henry4k/live-share-server"
 
-COPY --from=build /live-share/config.lua \
-                  /live-share/
 COPY --from=build /usr/local \
                   /usr/local
+COPY config.lua ./
+RUN mkdir uploads thumbnails
 
 EXPOSE 80
 VOLUME /live-share
