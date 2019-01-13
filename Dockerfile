@@ -48,6 +48,11 @@ RUN set -o xtrace; \
 COPY live-share ./live-share
 COPY server .gitignore Makefile *.rockspec ./
 
+RUN echo "#!/usr/bin/env lua$LUA_VERSION" > server.new && \
+    cat server >> server.new && \
+    chmod +x server.new && \
+    rm server && \
+    mv server.new server
 RUN luarocks-$LUA_VERSION make
 RUN rm -r .gitignore \
           Makefile \
@@ -61,7 +66,6 @@ RUN mkdir data/thumbnails
 
 
 FROM base
-ARG LUA_VERSION
 LABEL maintainer="Henry Kielmann <henrykielmann@gmail.com>"
 LABEL description="See https://github.com/henry4k/live-share-server"
 
@@ -74,8 +78,7 @@ COPY --from=build /usr/local/share/lua \
 EXPOSE 80
 VOLUME /live-share/data
 
-ENV LUA_VERSION $LUA_VERSION
-ENTRYPOINT lua$LUA_VERSION ./server --config data/config.lua
-CMD run
+ENTRYPOINT [ "./server", "--config", "data/config.lua" ]
+CMD [ "run" ]
 HEALTHCHECK --interval=5m --timeout=3s \
             CMD curl -f http://localhost/ || exit 1
