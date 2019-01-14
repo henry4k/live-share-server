@@ -20,8 +20,14 @@ build:
         - docker build -t $IMAGE_TAG .
         - docker push $IMAGE_TAG
 
-deploy:
+deploy_production:
     stage: deploy
+    only:
+        - master
+    #when: manual
+    environment:
+        name: production
+        url: http://live-share.henry4k.de
     image: alpine:latest
     variables:
         DEPLOY_HOST: henry4k.de
