@@ -20,7 +20,7 @@ build:
         - docker build -t $IMAGE_TAG .
         - docker push $IMAGE_TAG
 
-deploy_production:
+deploy production:
     stage: deploy
     only:
         - master
